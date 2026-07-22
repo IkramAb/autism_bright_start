@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { useSearchParams } from "next/navigation";
 import type { SettingsData, NotificationPrefView } from "@/lib/settings-shared";
 import {
@@ -24,6 +24,8 @@ import {
   updateOrganization,
   updatePipelineStage,
   updateRenewalRule,
+  uploadOrganizationLogo,
+  removeOrganizationLogo,
 } from "@/app/(app)/settings/actions";
 
 type Tab =
@@ -158,6 +160,8 @@ export function SettingsView({ data }: { data: SettingsData }) {
             pending={pending}
             onSaveOrg={(fd) => run(() => updateOrganization(fd))}
             onSaveProfile={(fd) => run(() => updateAdminProfile(fd))}
+            onUploadLogo={(fd) => run(() => uploadOrganizationLogo(fd))}
+            onRemoveLogo={() => run(() => removeOrganizationLogo())}
           />
         )}
 
@@ -279,15 +283,33 @@ function OrganizationPanel({
   pending,
   onSaveOrg,
   onSaveProfile,
+  onUploadLogo,
+  onRemoveLogo,
 }: {
   data: SettingsData;
   pending: boolean;
   onSaveOrg: (fd: FormData) => void;
   onSaveProfile: (fd: FormData) => void;
+  onUploadLogo: (fd: FormData) => void;
+  onRemoveLogo: () => void;
 }) {
   return (
     <div className="st-panel">
-      <div className="st-section-title">Organization profile</div>
+      <div className="st-section-title">Practice logo</div>
+      <div className="st-section-sub">
+        Appears in the sidebar and on the sign-in screen. Use a square PNG, JPG, SVG, WEBP, or GIF up
+        to 2 MB.
+      </div>
+      <LogoUploader
+        logoUrl={data.logoUrl}
+        pending={pending}
+        onUpload={onUploadLogo}
+        onRemove={onRemoveLogo}
+      />
+
+      <div className="st-section-title" style={{ marginTop: 24 }}>
+        Organization profile
+      </div>
       <div className="st-section-sub">
         Basic info about the practice — shown in the sidebar and used on any exported reports.
       </div>
@@ -933,6 +955,118 @@ function UsersPanel({ data, onInvite }: { data: SettingsData; onInvite: () => vo
         Invite admin user
       </button>
     </div>
+  );
+}
+
+function LogoUploader({
+  logoUrl,
+  pending,
+  onUpload,
+  onRemove,
+}: {
+  logoUrl: string | null;
+  pending: boolean;
+  onUpload: (fd: FormData) => void;
+  onRemove: () => void;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [preview, setPreview] = useState<string | null>(null);
+  const [fileName, setFileName] = useState<string | null>(null);
+
+  function handleSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (preview) URL.revokeObjectURL(preview);
+    if (file) {
+      setPreview(URL.createObjectURL(file));
+      setFileName(file.name);
+    } else {
+      setPreview(null);
+      setFileName(null);
+    }
+  }
+
+  const shownImage = preview ?? logoUrl;
+
+  return (
+    <form
+      className="full-card"
+      style={{ marginBottom: 0 }}
+      action={(fd) => {
+        onUpload(fd);
+        if (preview) URL.revokeObjectURL(preview);
+        setPreview(null);
+        setFileName(null);
+        if (inputRef.current) inputRef.current.value = "";
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+        <div
+          style={{
+            width: 64,
+            height: 64,
+            borderRadius: 14,
+            background: shownImage ? "#fff" : "var(--color-blue)",
+            border: "1px solid var(--color-line, #e5e7eb)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            overflow: "hidden",
+            flexShrink: 0,
+          }}
+        >
+          {shownImage ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={shownImage}
+              alt="Practice logo"
+              style={{ width: "100%", height: "100%", objectFit: "contain" }}
+            />
+          ) : (
+            <i className="ti ti-puzzle" style={{ fontSize: 26, color: "#fff" }} aria-hidden="true" />
+          )}
+        </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <input
+            ref={inputRef}
+            type="file"
+            name="logo"
+            accept="image/png,image/jpeg,image/svg+xml,image/webp,image/gif"
+            onChange={handleSelect}
+            style={{ fontSize: 12 }}
+          />
+          <div style={{ fontSize: 11, color: "var(--color-ink3)", marginTop: 6 }}>
+            {fileName
+              ? `Selected: ${fileName}`
+              : logoUrl
+                ? "A logo is set. Choose a file to replace it."
+                : "No logo uploaded yet."}
+          </div>
+        </div>
+      </div>
+      <div style={{ display: "flex", gap: 8, marginTop: 14 }}>
+        <button type="submit" className="btn btn-primary" disabled={pending || !fileName}>
+          <i className="ti ti-upload" style={{ fontSize: 13 }} aria-hidden="true" />
+          {logoUrl ? "Replace logo" : "Upload logo"}
+        </button>
+        {logoUrl && (
+          <button
+            type="button"
+            className="btn btn-outline"
+            disabled={pending}
+            onClick={() => {
+              if (preview) URL.revokeObjectURL(preview);
+              setPreview(null);
+              setFileName(null);
+              if (inputRef.current) inputRef.current.value = "";
+              onRemove();
+            }}
+          >
+            <i className="ti ti-trash" style={{ fontSize: 13 }} aria-hidden="true" />
+            Remove
+          </button>
+        )}
+      </div>
+    </form>
   );
 }
 

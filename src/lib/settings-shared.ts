@@ -175,6 +175,7 @@ export type IntegrationView = {
 
 export type SettingsData = {
   organization: OrganizationSettingsRow;
+  logoUrl: string | null;
   currentAdmin: {
     id: string;
     fullName: string;

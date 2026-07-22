@@ -873,3 +873,32 @@ where p.notification_type in (
 
 -- Sample/demo data (staff, clients, schedule, case notes) intentionally omitted.
 -- The system starts empty except for the admin login and required config above.
+
+
+-- >>>>>>>>>>>>>>>>>>>> migrations/20260722190000_branding_logo.sql <<<<<<<<<<<<<<<<<<<<
+
+-- Practice branding (logo) — public Storage bucket + policies.
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values (
+  'branding',
+  'branding',
+  true,
+  2097152, -- 2 MB
+  array['image/png', 'image/jpeg', 'image/svg+xml', 'image/webp', 'image/gif']
+)
+on conflict (id) do update
+  set public = excluded.public,
+      file_size_limit = excluded.file_size_limit,
+      allowed_mime_types = excluded.allowed_mime_types;
+
+drop policy if exists branding_public_read on storage.objects;
+create policy branding_public_read on storage.objects
+  for select
+  using (bucket_id = 'branding');
+
+drop policy if exists branding_admin_write on storage.objects;
+create policy branding_admin_write on storage.objects
+  for all
+  to authenticated
+  using (bucket_id = 'branding' and public.is_admin())
+  with check (bucket_id = 'branding' and public.is_admin());

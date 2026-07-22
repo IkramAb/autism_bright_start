@@ -9,17 +9,23 @@ type Props = {
   adminName: string;
   adminRole: string;
   adminInitials: string;
+  logoUrl?: string | null;
 };
 
-export function Sidebar({ adminName, adminRole, adminInitials }: Props) {
+export function Sidebar({ adminName, adminRole, adminInitials, logoUrl }: Props) {
   const pathname = usePathname();
 
   return (
     <aside className="sidebar">
       <div className="sidebar-logo">
         <div className="flex items-center gap-2.5">
-          <div className="logo-icon">
-            <i className="ti ti-puzzle" aria-hidden="true" />
+          <div className={`logo-icon${logoUrl ? " logo-icon-image" : ""}`}>
+            {logoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={logoUrl} alt="Practice logo" className="logo-img" />
+            ) : (
+              <i className="ti ti-puzzle" aria-hidden="true" />
+            )}
           </div>
           <div>
             <div className="logo-name">ABA Connect</div>

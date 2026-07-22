@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentAdmin } from "@/lib/auth";
+import { getOrganizationLogoUrl } from "@/lib/branding";
 import { DOC_TYPE_LABELS } from "@/lib/documents";
 import { CHECKLIST_GROUP_LABELS } from "@/lib/staff-utils";
 import type { PipelineStage } from "@/lib/types/db";
@@ -95,6 +96,7 @@ function formatRecipientsSummary(
 export async function getSettingsData(): Promise<SettingsData> {
   const supabase = await createClient();
   const currentAdmin = await getCurrentAdmin();
+  const logoUrl = await getOrganizationLogoUrl();
 
   const [
     { data: org },
@@ -222,6 +224,7 @@ export async function getSettingsData(): Promise<SettingsData> {
 
   return {
     organization,
+    logoUrl,
     currentAdmin: currentAdmin ?? {
       id: "",
       fullName: "Admin",

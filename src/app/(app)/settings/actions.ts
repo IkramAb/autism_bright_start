@@ -2,7 +2,15 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { getCurrentAdmin } from "@/lib/auth";
+import {
+  BRANDING_BUCKET,
+  LOGO_ALLOWED_MIME_TYPES,
+  LOGO_MAX_BYTES,
+  LOGO_OBJECT_PATH,
+  ensureBrandingBucket,
+} from "@/lib/branding";
 import {
   connectApiKeyIntegration,
   disconnectIntegration,
@@ -79,6 +87,57 @@ export async function updateAdminProfile(formData: FormData): Promise<ActionResu
   if (dbError) return { ok: false, error: dbError.message };
   revalidatePath("/settings");
   return { ok: true, message: "Profile updated." };
+}
+
+export async function uploadOrganizationLogo(formData: FormData): Promise<ActionResult> {
+  const { error } = await requireAdmin();
+  if (error) return { ok: false, error };
+
+  const file = formData.get("logo");
+  if (!(file instanceof File) || file.size === 0) {
+    return { ok: false, error: "Choose an image file to upload." };
+  }
+  if (!LOGO_ALLOWED_MIME_TYPES.includes(file.type)) {
+    return { ok: false, error: "Use a PNG, JPG, SVG, WEBP, or GIF image." };
+  }
+  if (file.size > LOGO_MAX_BYTES) {
+    return { ok: false, error: "Logo must be under 2 MB." };
+  }
+
+  try {
+    await ensureBrandingBucket();
+    const admin = createAdminClient();
+    const bytes = new Uint8Array(await file.arrayBuffer());
+    const { error: uploadError } = await admin.storage
+      .from(BRANDING_BUCKET)
+      .upload(LOGO_OBJECT_PATH, bytes, { contentType: file.type, upsert: true });
+    if (uploadError) return { ok: false, error: uploadError.message };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "Upload failed." };
+  }
+
+  revalidatePath("/settings");
+  revalidatePath("/", "layout");
+  return { ok: true, message: "Logo updated." };
+}
+
+export async function removeOrganizationLogo(): Promise<ActionResult> {
+  const { error } = await requireAdmin();
+  if (error) return { ok: false, error };
+
+  try {
+    const admin = createAdminClient();
+    const { error: removeError } = await admin.storage
+      .from(BRANDING_BUCKET)
+      .remove([LOGO_OBJECT_PATH]);
+    if (removeError) return { ok: false, error: removeError.message };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "Remove failed." };
+  }
+
+  revalidatePath("/settings");
+  revalidatePath("/", "layout");
+  return { ok: true, message: "Logo removed." };
 }
 
 export async function updateRenewalRule(formData: FormData): Promise<ActionResult> {
