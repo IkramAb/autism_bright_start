@@ -194,6 +194,66 @@ export async function addEmployee(formData: FormData): Promise<ActionResult> {
   return { ok: true, message: `${fullName} added to staff.` };
 }
 
+export async function updateStaff(staffId: string, formData: FormData): Promise<ActionResult> {
+  const admin = await getCurrentAdmin();
+  if (!admin) return { ok: false, error: "Not authorized." };
+
+  const fullName = String(formData.get("full_name") ?? "").trim();
+  if (!fullName) return { ok: false, error: "Enter a full name." };
+
+  const role = String(formData.get("role") ?? "RBT").trim();
+  const roleType = String(formData.get("role_type") ?? "rbt");
+  const email = String(formData.get("email") ?? "").trim() || null;
+  const phone = String(formData.get("phone") ?? "").trim() || null;
+  const hiredOn = String(formData.get("hired_on") ?? "").trim() || null;
+  const status = String(formData.get("status") ?? "onboarding") as
+    Database["public"]["Tables"]["staff"]["Row"]["status"];
+  const bcbaCert = String(formData.get("bcba_cert_number") ?? "").trim() || null;
+  const bgStudyNumber = String(formData.get("background_study_number") ?? "").trim() || null;
+
+  const initials = fullName
+    .split(" ")
+    .map((p) => p[0])
+    .filter(Boolean)
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("staff")
+    .update({
+      full_name: fullName,
+      role,
+      role_type: roleType,
+      email,
+      phone,
+      hired_on: hiredOn,
+      status,
+      bcba_cert_number: bcbaCert,
+      background_study_number: bgStudyNumber,
+      avatar_initials: initials,
+    })
+    .eq("id", staffId);
+
+  if (error) return { ok: false, error: error.message };
+
+  revalidateStaff(staffId);
+  return { ok: true, message: `${fullName} updated.` };
+}
+
+export async function deleteStaff(staffId: string): Promise<ActionResult> {
+  const admin = await getCurrentAdmin();
+  if (!admin) return { ok: false, error: "Not authorized." };
+
+  const supabase = await createClient();
+  const { error } = await supabase.from("staff").delete().eq("id", staffId);
+  if (error) return { ok: false, error: error.message };
+
+  revalidateStaff(staffId);
+  return { ok: true, message: "Staff member removed." };
+}
+
 function offsetDate(isoDate: string, days: number): string {
   const d = new Date(isoDate + "T00:00:00");
   d.setDate(d.getDate() + days);

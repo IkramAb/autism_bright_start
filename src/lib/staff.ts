@@ -45,6 +45,7 @@ export type StaffDetail = {
   email: string | null;
   phone: string | null;
   hiredLabel: string;
+  hiredOn: string | null;
   status: StaffStatus;
   statusLabel: string;
   statusClass: string;
@@ -205,6 +206,7 @@ export async function getStaffDetail(id: string): Promise<StaffDetail | null> {
     email: s.email,
     phone: s.phone,
     hiredLabel: fmtDate(s.hired_on),
+    hiredOn: s.hired_on,
     status: s.status,
     statusLabel: sp.label,
     statusClass: sp.className,

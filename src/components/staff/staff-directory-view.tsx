@@ -3,9 +3,10 @@
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import type { StaffListRow, StaffDetail } from "@/lib/staff";
-import { fetchStaffDetail } from "@/app/(app)/staff/actions";
+import { fetchStaffDetail, deleteStaff } from "@/app/(app)/staff/actions";
 import { StaffDetailPanel } from "./staff-detail-panel";
 import { AddEmployeeModal } from "./add-employee-modal";
+import { EditStaffModal } from "./edit-staff-modal";
 
 type Filter = "all" | "rbt" | "bcba";
 
@@ -14,8 +15,10 @@ export function StaffDirectoryView({ rows }: { rows: StaffListRow[] }) {
   const [filter, setFilter] = useState<Filter>("all");
   const [query, setQuery] = useState("");
   const [detail, setDetail] = useState<StaffDetail | null>(null);
+  const [editDetail, setEditDetail] = useState<StaffDetail | null>(null);
   const [showAdd, setShowAdd] = useState(false);
   const [pending, startTransition] = useTransition();
+  const [busyId, setBusyId] = useState<string | null>(null);
 
   useEffect(() => {
     function onPrimary() {
@@ -48,6 +51,28 @@ export function StaffDirectoryView({ rows }: { rows: StaffListRow[] }) {
     });
   }
 
+  function openEdit(id: string) {
+    setBusyId(id);
+    startTransition(async () => {
+      const d = await fetchStaffDetail(id);
+      setBusyId(null);
+      if (d) setEditDetail(d);
+    });
+  }
+
+  function handleDelete(row: StaffListRow) {
+    const confirmed = window.confirm(
+      `Delete ${row.fullName}? This permanently removes the staff member and all their onboarding items, trainings, documents, and background checks. This cannot be undone.`,
+    );
+    if (!confirmed) return;
+    setBusyId(row.id);
+    startTransition(async () => {
+      await deleteStaff(row.id);
+      setBusyId(null);
+      router.refresh();
+    });
+  }
+
   if (detail) {
     return (
       <StaffDetailPanel
@@ -61,6 +86,9 @@ export function StaffDirectoryView({ rows }: { rows: StaffListRow[] }) {
   return (
     <div>
       {showAdd && <AddEmployeeModal onClose={() => setShowAdd(false)} />}
+      {editDetail && (
+        <EditStaffModal staff={editDetail} onClose={() => setEditDetail(null)} />
+      )}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <p className="page-meta">{rows.length} staff members</p>
         <div className="search">
@@ -120,18 +148,46 @@ export function StaffDirectoryView({ rows }: { rows: StaffListRow[] }) {
                   <span className={`pill ${row.certClass}`} style={{ fontSize: 10 }}>{row.certLabel}</span>
                 </td>
                 <td>
-                  <button
-                    type="button"
-                    className="btn btn-outline"
-                    style={{ fontSize: 11, padding: "4px 10px" }}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      openDetail(row.id);
-                    }}
-                    disabled={pending}
-                  >
-                    View →
-                  </button>
+                  <div style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
+                    <button
+                      type="button"
+                      className="btn btn-outline"
+                      style={{ fontSize: 11, padding: "4px 10px" }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openDetail(row.id);
+                      }}
+                      disabled={pending}
+                    >
+                      View →
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-outline"
+                      style={{ fontSize: 11, padding: "4px 8px" }}
+                      title="Edit"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openEdit(row.id);
+                      }}
+                      disabled={pending && busyId === row.id}
+                    >
+                      <i className="ti ti-edit" style={{ fontSize: 12 }} />
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-outline"
+                      style={{ fontSize: 11, padding: "4px 8px", color: "var(--color-coral-dark)", borderColor: "var(--color-coral)" }}
+                      title="Delete"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDelete(row);
+                      }}
+                      disabled={pending && busyId === row.id}
+                    >
+                      <i className="ti ti-trash" style={{ fontSize: 12 }} />
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}

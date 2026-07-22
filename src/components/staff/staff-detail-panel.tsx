@@ -3,8 +3,9 @@
 import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import type { StaffDetail } from "@/lib/staff";
-import { toggleChecklistItem, updateStaffNotes, fetchStaffDetail, uploadStaffDocument } from "@/app/(app)/staff/actions";
+import { toggleChecklistItem, updateStaffNotes, fetchStaffDetail, uploadStaffDocument, deleteStaff } from "@/app/(app)/staff/actions";
 import { BG_STEP_LABELS, bgStatusPill, trainingStatusPill, fmtDate } from "@/lib/staff-utils";
+import { EditStaffModal } from "./edit-staff-modal";
 
 function docStatusPill(status: string) {
   if (status === "uploaded") return { label: "Uploaded", className: "pill-green" };
@@ -27,6 +28,9 @@ export function StaffDetailPanel({
   const [notes, setNotes] = useState(initial.notes ?? "");
   const [lockToast, setLockToast] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+  const [showEdit, setShowEdit] = useState(false);
+  const [deleting, startDeleteTransition] = useTransition();
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   useEffect(() => {
     setStaff(initial);
@@ -65,14 +69,58 @@ export function StaffDetailPanel({
     });
   }
 
+  function handleDelete() {
+    const confirmed = window.confirm(
+      `Delete ${staff.fullName}? This permanently removes the staff member and all their onboarding items, trainings, documents, and background checks. This cannot be undone.`,
+    );
+    if (!confirmed) return;
+    setDeleteError(null);
+    startDeleteTransition(async () => {
+      const res = await deleteStaff(staff.id);
+      if (res.ok) {
+        router.refresh();
+        onBack();
+      } else {
+        setDeleteError(res.error ?? "Could not delete staff member.");
+      }
+    });
+  }
+
   return (
     <div>
+      {showEdit && (
+        <EditStaffModal staff={staff} onClose={() => setShowEdit(false)} onSaved={reload} />
+      )}
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
         <button type="button" className="btn btn-outline" style={{ fontSize: 11, padding: "4px 10px" }} onClick={onBack}>
           <i className="ti ti-arrow-left" style={{ fontSize: 12 }} /> {backLabel}
         </button>
         <span style={{ fontSize: 12, color: "var(--color-ink3)" }}>{staff.fullName}</span>
+        <div style={{ marginLeft: "auto", display: "flex", gap: 8 }}>
+          <button
+            type="button"
+            className="btn btn-outline"
+            style={{ fontSize: 11, padding: "4px 10px" }}
+            onClick={() => setShowEdit(true)}
+          >
+            <i className="ti ti-edit" style={{ fontSize: 12 }} /> Edit
+          </button>
+          <button
+            type="button"
+            className="btn btn-outline"
+            style={{ fontSize: 11, padding: "4px 10px", color: "var(--color-coral-dark)", borderColor: "var(--color-coral)" }}
+            disabled={deleting}
+            onClick={handleDelete}
+          >
+            <i className="ti ti-trash" style={{ fontSize: 12 }} /> {deleting ? "Deleting…" : "Delete"}
+          </button>
+        </div>
       </div>
+      {deleteError && (
+        <div style={{ marginBottom: 12, padding: "8px 10px", background: "var(--color-coral-light)", borderRadius: 8, fontSize: 12, color: "var(--color-coral-dark)" }}>
+          {deleteError}
+        </div>
+      )}
 
       <div className="grid-2">
         <div>
