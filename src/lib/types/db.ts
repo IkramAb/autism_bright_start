@@ -42,6 +42,7 @@ export type ClientRow = {
   id: string;
   ref_code: string;
   age_label: string | null;
+  service_start_on: string | null;
   aba_status: AbaStatus;
   referral_source: ReferralSource | null;
   ma_status: MaStatus;

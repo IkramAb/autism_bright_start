@@ -33,6 +33,14 @@ export function avatarFor(refCode: string) {
   return AVATAR_PALETTE[h];
 }
 
+// Formats the entry / start-of-service date for display (PHI-free, not a DOB).
+export function serviceStartLabel(date: string | null): string | null {
+  if (!date) return null;
+  const d = new Date(date + "T00:00:00");
+  if (Number.isNaN(d.getTime())) return null;
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+}
+
 function abaContext(aba: AbaStatus, source: ReferralSource | null): string {
   if (aba === "new") return "New to ABA";
   if (aba === "not_new") return "Not new to ABA";
@@ -95,7 +103,7 @@ async function loadRules(): Promise<Map<string, RenewalRule>> {
 export type ClientListRow = {
   id: string;
   refCode: string;
-  ageLabel: string | null;
+  serviceStartLabel: string | null;
   context: string;
   status: ClientStatus;
   stageLabel: string;
@@ -156,7 +164,7 @@ export async function getClientListData(): Promise<ClientListData> {
     rows.push({
       id: c.id,
       refCode: c.ref_code,
-      ageLabel: c.age_label,
+      serviceStartLabel: serviceStartLabel(c.service_start_on),
       context: abaContext(c.aba_status, c.referral_source),
       status: c.status,
       stageLabel: sp.label,
@@ -185,7 +193,7 @@ export type ClientNote = {
 export type ClientDetail = {
   id: string;
   refCode: string;
-  ageLabel: string | null;
+  serviceStartLabel: string | null;
   context: string;
   abaStatus: AbaStatus;
   referralSource: ReferralSource | null;
@@ -280,7 +288,7 @@ export async function getClientDetail(id: string): Promise<ClientDetail | null> 
   return {
     id: c.id,
     refCode: c.ref_code,
-    ageLabel: c.age_label,
+    serviceStartLabel: serviceStartLabel(c.service_start_on),
     context: abaContext(c.aba_status, c.referral_source),
     abaStatus: c.aba_status,
     referralSource: c.referral_source,
@@ -388,7 +396,7 @@ export async function getDocumentTrackerData(): Promise<DocTrackerData> {
     trackerClients.push({
       id: c.id,
       refCode: c.ref_code,
-      context: `${c.age_label ?? "Age —"} · ${stage?.name ?? c.status}`,
+      context: `${serviceStartLabel(c.service_start_on) ?? "Start —"} · ${stage?.name ?? c.status}`,
       stageLabel: stage?.name ?? c.status,
       initBg: av.bg,
       initColor: av.color,

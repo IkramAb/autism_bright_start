@@ -121,7 +121,7 @@ function KanbanCard({ card, onOpen }: { card: CardView; onOpen: () => void }) {
         <div style={{ flex: 1, minWidth: 0 }}>
           <div className="kb-name">Client #{card.refCode}</div>
           <div className="kb-meta">
-            {card.ageLabel ?? "Age —"} · {card.abaContext}
+            {card.serviceStartLabel ?? "Start —"} · {card.abaContext}
           </div>
         </div>
       </div>
@@ -174,7 +174,7 @@ function ListView({
               <tr key={card.id} style={{ borderTop: "0.5px solid var(--color-line)", cursor: "pointer" }} onClick={() => onOpen(card)}>
                 <td style={{ padding: "10px 14px" }}>
                   <div style={{ fontWeight: 600, color: "var(--color-ink)" }}>Client #{card.refCode}</div>
-                  <div style={{ fontSize: 10.5, color: "var(--color-ink3)" }}>{card.ageLabel ?? "Age —"}</div>
+                  <div style={{ fontSize: 10.5, color: "var(--color-ink3)" }}>{card.serviceStartLabel ?? "Start —"}</div>
                 </td>
                 <td style={{ padding: "10px 14px" }}>
                   <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>

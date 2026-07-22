@@ -457,6 +457,7 @@ export type Database = {
           phone_screen_due_on: string | null
           ref_code: string
           referral_source: Database["public"]["Enums"]["referral_source"] | null
+          service_start_on: string | null
           status: Database["public"]["Enums"]["client_status"]
           updated_at: string
         }
@@ -480,6 +481,7 @@ export type Database = {
           referral_source?:
             | Database["public"]["Enums"]["referral_source"]
             | null
+          service_start_on?: string | null
           status?: Database["public"]["Enums"]["client_status"]
           updated_at?: string
         }
@@ -503,6 +505,7 @@ export type Database = {
           referral_source?:
             | Database["public"]["Enums"]["referral_source"]
             | null
+          service_start_on?: string | null
           status?: Database["public"]["Enums"]["client_status"]
           updated_at?: string
         }

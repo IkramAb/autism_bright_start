@@ -53,7 +53,7 @@ export function ClientDrawer({ card, onClose }: { card: CardView; onClose: () =>
             <div>
               <div style={{ fontSize: 16, fontWeight: 600, color: "var(--color-ink)" }}>Client #{card.refCode}</div>
               <div style={{ fontSize: 12, color: "var(--color-ink3)" }}>
-                {card.ageLabel ? `${card.ageLabel} · ` : ""}{card.abaContext}
+                {card.serviceStartLabel ? `${card.serviceStartLabel} · ` : ""}{card.abaContext}
               </div>
             </div>
           </div>

@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { serviceStartLabel } from "@/lib/clients";
 import type {
   ClientRow,
   ClientDocumentRow,
@@ -54,7 +55,7 @@ type Tone = "teal" | "amber" | "coral" | "neutral";
 export type CardView = {
   id: string;
   refCode: string;
-  ageLabel: string | null;
+  serviceStartLabel: string | null;
   abaContext: string;
   initBg: string;
   initColor: string;
@@ -249,7 +250,7 @@ function buildCard(
   return {
     id: client.id,
     refCode: client.ref_code,
-    ageLabel: client.age_label,
+    serviceStartLabel: serviceStartLabel(client.service_start_on),
     abaContext:
       client.aba_status === "new"
         ? "New to ABA"

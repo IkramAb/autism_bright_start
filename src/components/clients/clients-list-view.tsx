@@ -142,7 +142,7 @@ function ClientRow({ row }: { row: ClientListRow }) {
             <div>
               <div style={{ fontWeight: 500, fontSize: 13 }}>Client #{row.refCode}</div>
               <div style={{ fontSize: 10, color: "var(--color-ink3)" }}>
-                {row.ageLabel ?? "Age —"} · {row.context}
+                {row.serviceStartLabel ?? "Start —"} · {row.context}
               </div>
             </div>
           </div>

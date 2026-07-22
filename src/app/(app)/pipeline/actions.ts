@@ -96,7 +96,7 @@ export async function createReferral(formData: FormData): Promise<ActionResult> 
   if (!admin) return { ok: false, error: "Not authorized." };
 
   const referralSource = (formData.get("referral_source") as ReferralSource) || "other";
-  const ageLabel = (formData.get("age_label") as string)?.trim() || null;
+  const serviceStartOn = (formData.get("service_start_on") as string) || null;
 
   const supabase = await createClient();
   const stageId = await newReferralStageId(supabase);
@@ -112,7 +112,7 @@ export async function createReferral(formData: FormData): Promise<ActionResult> 
     .from("clients")
     .insert({
       ref_code: refCode!,
-      age_label: ageLabel,
+      service_start_on: serviceStartOn,
       referral_source: referralSource,
       current_stage_id: stageId,
       status: "onboarding",
@@ -146,7 +146,7 @@ export async function createClientFull(formData: FormData): Promise<ActionResult
   const admin = await getCurrentAdmin();
   if (!admin) return { ok: false, error: "Not authorized." };
 
-  const ageLabel = (formData.get("age_label") as string)?.trim() || null;
+  const serviceStartOn = (formData.get("service_start_on") as string) || null;
   const referralSource = (formData.get("referral_source") as ReferralSource) || "other";
   const abaStatus = (formData.get("aba_status") as AbaStatus) || "unknown";
   const maStatus = (formData.get("ma_status") as MaStatus) || "unknown";
@@ -166,7 +166,7 @@ export async function createClientFull(formData: FormData): Promise<ActionResult
     .from("clients")
     .insert({
       ref_code: refCode!,
-      age_label: ageLabel,
+      service_start_on: serviceStartOn,
       referral_source: referralSource,
       aba_status: abaStatus,
       ma_status: maStatus,
@@ -195,6 +195,51 @@ export async function createClientFull(formData: FormData): Promise<ActionResult
 
   revalidatePath("/pipeline");
   revalidatePath("/clients");
+  revalidatePath("/documents");
+  return { ok: true };
+}
+
+export async function updateClientRefCode(
+  clientId: string,
+  rawRefCode: string,
+): Promise<ActionResult> {
+  const admin = await getCurrentAdmin();
+  if (!admin) return { ok: false, error: "Not authorized." };
+
+  const custom = rawRefCode?.trim();
+  if (!custom) return { ok: false, error: "Client ID cannot be empty." };
+  if (custom.length > 32)
+    return { ok: false, error: "Client ID must be 32 characters or fewer." };
+  if (!REF_CODE_PATTERN.test(custom))
+    return {
+      ok: false,
+      error:
+        "Client ID may only contain letters, numbers, spaces, dashes, and underscores.",
+    };
+
+  const supabase = await createClient();
+
+  const { data: existing } = await supabase
+    .from("clients")
+    .select("id")
+    .eq("ref_code", custom)
+    .maybeSingle();
+  if (existing && existing.id !== clientId)
+    return { ok: false, error: `Client ID "${custom}" is already in use.` };
+
+  const { error } = await supabase
+    .from("clients")
+    .update({ ref_code: custom })
+    .eq("id", clientId);
+  if (error)
+    return {
+      ok: false,
+      error: error.code === "23505" ? "That Client ID is already in use." : error.message,
+    };
+
+  revalidatePath("/clients");
+  revalidatePath(`/clients/${clientId}`);
+  revalidatePath("/pipeline");
   revalidatePath("/documents");
   return { ok: true };
 }

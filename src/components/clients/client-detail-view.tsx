@@ -8,12 +8,42 @@ import { PIPELINE_STRIP } from "@/lib/pipeline-constants";
 import { CATALYST_URL } from "@/lib/documents";
 import { DocumentTable } from "@/components/documents/document-table";
 import { saveClientNote } from "@/app/(app)/documents/actions";
+import { updateClientRefCode } from "@/app/(app)/pipeline/actions";
 
 export function ClientDetailView({ client }: { client: ClientDetail }) {
   const router = useRouter();
   const [note, setNote] = useState("");
   const [pending, startTransition] = useTransition();
   const [noteError, setNoteError] = useState<string | null>(null);
+
+  const [editingId, setEditingId] = useState(false);
+  const [refValue, setRefValue] = useState(client.refCode);
+  const [refError, setRefError] = useState<string | null>(null);
+  const [savingId, startIdTransition] = useTransition();
+
+  function startEditId() {
+    setRefValue(client.refCode);
+    setRefError(null);
+    setEditingId(true);
+  }
+
+  function cancelEditId() {
+    setEditingId(false);
+    setRefError(null);
+  }
+
+  function submitRefCode() {
+    setRefError(null);
+    startIdTransition(async () => {
+      const res = await updateClientRefCode(client.id, refValue);
+      if (res.ok) {
+        setEditingId(false);
+        router.refresh();
+      } else {
+        setRefError(res.error ?? "Could not update Client ID.");
+      }
+    });
+  }
 
   function submitNote() {
     setNoteError(null);
@@ -49,11 +79,87 @@ export function ClientDetailView({ client }: { client: ClientDetail }) {
                 <i className="ti ti-user" style={{ fontSize: 20 }} />
               </div>
               <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 16, fontWeight: 600, color: "var(--color-ink)" }}>
-                  Client #{client.refCode}
-                </div>
+                {editingId ? (
+                  <div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                      <span style={{ fontSize: 16, fontWeight: 600, color: "var(--color-ink)" }}>
+                        Client #
+                      </span>
+                      <input
+                        autoFocus
+                        value={refValue}
+                        onChange={(e) => setRefValue(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") submitRefCode();
+                          if (e.key === "Escape") cancelEditId();
+                        }}
+                        maxLength={32}
+                        disabled={savingId}
+                        style={{
+                          fontSize: 15,
+                          fontWeight: 600,
+                          color: "var(--color-ink)",
+                          border: "0.5px solid var(--color-line)",
+                          borderRadius: 6,
+                          padding: "3px 8px",
+                          width: 140,
+                          outline: "none",
+                        }}
+                      />
+                      <button
+                        type="button"
+                        className="btn btn-primary"
+                        style={{ fontSize: 11, padding: "5px 10px" }}
+                        disabled={savingId || !refValue.trim()}
+                        onClick={submitRefCode}
+                      >
+                        {savingId ? "Saving…" : "Save"}
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-outline"
+                        style={{ fontSize: 11, padding: "5px 10px" }}
+                        disabled={savingId}
+                        onClick={cancelEditId}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                    {refError && (
+                      <div style={{ fontSize: 11, color: "var(--color-coral-dark)", marginTop: 4 }}>
+                        {refError}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    <span style={{ fontSize: 16, fontWeight: 600, color: "var(--color-ink)" }}>
+                      Client #{client.refCode}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={startEditId}
+                      title="Edit Client ID"
+                      aria-label="Edit Client ID"
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 4,
+                        border: "0.5px solid var(--color-line)",
+                        background: "transparent",
+                        borderRadius: 6,
+                        padding: "3px 8px",
+                        fontSize: 11,
+                        color: "var(--color-ink3)",
+                        cursor: "pointer",
+                      }}
+                    >
+                      <i className="ti ti-pencil" style={{ fontSize: 12 }} /> Edit
+                    </button>
+                  </div>
+                )}
                 <div style={{ fontSize: 12, color: "var(--color-ink3)", marginTop: 2 }}>
-                  {client.ageLabel ?? "Age —"} · {client.context}
+                  {client.serviceStartLabel ?? "Start —"} · {client.context}
                 </div>
                 <div style={{ marginTop: 6 }}>
                   <span className={`pill ${client.stagePillClass}`} style={{ fontSize: 11 }}>

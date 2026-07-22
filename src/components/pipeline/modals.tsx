@@ -62,8 +62,8 @@ export function QuickAddModal({ onClose }: { onClose: () => void }) {
           />
         </div>
         <div style={{ marginBottom: 12 }}>
-          <label className="modal-label">Age (coarse, optional)</label>
-          <input className="modal-input" name="age_label" placeholder="e.g. Age 7" />
+          <label className="modal-label">Entry date / Start of service (optional)</label>
+          <input className="modal-input" type="date" name="service_start_on" />
         </div>
         <div style={{ marginBottom: 18 }}>
           <label className="modal-label">Referral source</label>
@@ -126,8 +126,8 @@ export function AddClientModal({ onClose }: { onClose: () => void }) {
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
           <div>
-            <label className="modal-label">Age (coarse)</label>
-            <input className="modal-input" name="age_label" placeholder="e.g. Age 8" />
+            <label className="modal-label">Entry date / Start of service</label>
+            <input className="modal-input" type="date" name="service_start_on" />
           </div>
           <div>
             <label className="modal-label">Phone screen due</label>

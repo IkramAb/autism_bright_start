@@ -446,7 +446,8 @@ create index idx_staff_documents_staff on public.staff_documents (staff_id);
 create table public.clients (
   id uuid primary key default gen_random_uuid(),
   ref_code text not null unique,          -- e.g. "0142" (rendered as "Client #0142")
-  age_label text,                         -- coarse only, e.g. "Age 8" — never a DOB
+  age_label text,                         -- deprecated; kept for back-compat, unused by the app
+  service_start_on date,                  -- entry / start-of-service date (PHI-free; not a DOB)
   aba_status aba_status not null default 'unknown',
   referral_source referral_source,
   ma_status ma_status not null default 'unknown',
