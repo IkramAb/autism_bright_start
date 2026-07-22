@@ -194,6 +194,7 @@ export type ClientDetail = {
   id: string;
   refCode: string;
   serviceStartLabel: string | null;
+  serviceStartOn: string | null;
   context: string;
   abaStatus: AbaStatus;
   referralSource: ReferralSource | null;
@@ -289,6 +290,7 @@ export async function getClientDetail(id: string): Promise<ClientDetail | null> 
     id: c.id,
     refCode: c.ref_code,
     serviceStartLabel: serviceStartLabel(c.service_start_on),
+    serviceStartOn: c.service_start_on,
     context: abaContext(c.aba_status, c.referral_source),
     abaStatus: c.aba_status,
     referralSource: c.referral_source,

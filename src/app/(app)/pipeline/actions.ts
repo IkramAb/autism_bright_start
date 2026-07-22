@@ -7,6 +7,7 @@ import type {
   AbaStatus,
   ReferralSource,
   MaStatus,
+  ClientStatus,
   PipelineStage,
   ClientDocumentRow,
 } from "@/lib/types/db";
@@ -239,6 +240,53 @@ export async function updateClientRefCode(
 
   revalidatePath("/clients");
   revalidatePath(`/clients/${clientId}`);
+  revalidatePath("/pipeline");
+  revalidatePath("/documents");
+  return { ok: true };
+}
+
+export async function updateClient(
+  clientId: string,
+  formData: FormData,
+): Promise<ActionResult> {
+  const admin = await getCurrentAdmin();
+  if (!admin) return { ok: false, error: "Not authorized." };
+
+  const referralSource = (formData.get("referral_source") as ReferralSource) || "other";
+  const abaStatus = (formData.get("aba_status") as AbaStatus) || "unknown";
+  const maStatus = (formData.get("ma_status") as MaStatus) || "unknown";
+  const status = (formData.get("status") as ClientStatus) || "onboarding";
+  const serviceStartOn = (formData.get("service_start_on") as string) || null;
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("clients")
+    .update({
+      referral_source: referralSource,
+      aba_status: abaStatus,
+      ma_status: maStatus,
+      status,
+      service_start_on: serviceStartOn,
+    })
+    .eq("id", clientId);
+  if (error) return { ok: false, error: error.message };
+
+  revalidatePath("/clients");
+  revalidatePath(`/clients/${clientId}`);
+  revalidatePath("/pipeline");
+  revalidatePath("/documents");
+  return { ok: true };
+}
+
+export async function deleteClient(clientId: string): Promise<ActionResult> {
+  const admin = await getCurrentAdmin();
+  if (!admin) return { ok: false, error: "Not authorized." };
+
+  const supabase = await createClient();
+  const { error } = await supabase.from("clients").delete().eq("id", clientId);
+  if (error) return { ok: false, error: error.message };
+
+  revalidatePath("/clients");
   revalidatePath("/pipeline");
   revalidatePath("/documents");
   return { ok: true };

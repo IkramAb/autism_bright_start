@@ -7,14 +7,36 @@ import type { ClientDetail } from "@/lib/clients";
 import { PIPELINE_STRIP } from "@/lib/pipeline-constants";
 import { CATALYST_URL } from "@/lib/documents";
 import { DocumentTable } from "@/components/documents/document-table";
+import { EditClientModal } from "@/components/clients/edit-client-modal";
 import { saveClientNote } from "@/app/(app)/documents/actions";
-import { updateClientRefCode } from "@/app/(app)/pipeline/actions";
+import { updateClientRefCode, deleteClient } from "@/app/(app)/pipeline/actions";
 
 export function ClientDetailView({ client }: { client: ClientDetail }) {
   const router = useRouter();
   const [note, setNote] = useState("");
   const [pending, startTransition] = useTransition();
   const [noteError, setNoteError] = useState<string | null>(null);
+
+  const [showEdit, setShowEdit] = useState(false);
+  const [deleting, startDeleteTransition] = useTransition();
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  function handleDelete() {
+    const confirmed = window.confirm(
+      `Delete Client #${client.refCode}? This permanently removes the client and all its documents, notes, and schedule entries. This cannot be undone.`,
+    );
+    if (!confirmed) return;
+    setDeleteError(null);
+    startDeleteTransition(async () => {
+      const res = await deleteClient(client.id);
+      if (res.ok) {
+        router.push("/clients");
+        router.refresh();
+      } else {
+        setDeleteError(res.error ?? "Could not delete client.");
+      }
+    });
+  }
 
   const [editingId, setEditingId] = useState(false);
   const [refValue, setRefValue] = useState(client.refCode);
@@ -60,6 +82,21 @@ export function ClientDetailView({ client }: { client: ClientDetail }) {
 
   return (
     <div>
+      {showEdit && <EditClientModal client={client} onClose={() => setShowEdit(false)} />}
+      {deleteError && (
+        <div
+          style={{
+            marginBottom: 12,
+            padding: "8px 10px",
+            background: "var(--color-coral-light)",
+            borderRadius: 8,
+            fontSize: 12,
+            color: "var(--color-coral-dark)",
+          }}
+        >
+          {deleteError}
+        </div>
+      )}
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
         <Link href="/clients" className="btn btn-outline" style={{ fontSize: 11, padding: "4px 10px" }}>
           <i className="ti ti-arrow-left" style={{ fontSize: 12 }} /> All clients
@@ -167,17 +204,41 @@ export function ClientDetailView({ client }: { client: ClientDetail }) {
                   </span>
                 </div>
               </div>
-              {client.driveFolderUrl && (
-                <a
-                  href={client.driveFolderUrl}
-                  target="_blank"
-                  rel="noreferrer"
+              <div style={{ display: "flex", flexDirection: "column", gap: 6, alignSelf: "flex-start" }}>
+                {client.driveFolderUrl && (
+                  <a
+                    href={client.driveFolderUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="btn btn-outline"
+                    style={{ fontSize: 11, padding: "5px 12px" }}
+                  >
+                    <i className="ti ti-brand-google-drive" style={{ fontSize: 12 }} /> Drive
+                  </a>
+                )}
+                <button
+                  type="button"
                   className="btn btn-outline"
-                  style={{ fontSize: 11, padding: "5px 12px", alignSelf: "flex-start" }}
+                  style={{ fontSize: 11, padding: "5px 12px" }}
+                  onClick={() => setShowEdit(true)}
                 >
-                  <i className="ti ti-brand-google-drive" style={{ fontSize: 12 }} /> Drive
-                </a>
-              )}
+                  <i className="ti ti-edit" style={{ fontSize: 12 }} /> Edit
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-outline"
+                  style={{
+                    fontSize: 11,
+                    padding: "5px 12px",
+                    color: "var(--color-coral-dark)",
+                    borderColor: "var(--color-coral)",
+                  }}
+                  onClick={handleDelete}
+                  disabled={deleting}
+                >
+                  <i className="ti ti-trash" style={{ fontSize: 12 }} /> {deleting ? "Deleting…" : "Delete"}
+                </button>
+              </div>
             </div>
             <div>
               {client.fields.map((f) => (
