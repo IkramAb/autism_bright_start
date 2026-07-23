@@ -105,16 +105,38 @@ export async function uploadOrganizationLogo(formData: FormData): Promise<Action
   }
 
   try {
-    await ensureBrandingBucket();
-    // Prefer the service role when configured; otherwise fall back to the
-    // signed-in admin's client, authorised by the branding_admin_write RLS
-    // policy. Either path works — no service-role secret is required.
-    const storage = tryCreateAdminClient() ?? (await createClient());
     const bytes = new Uint8Array(await file.arrayBuffer());
-    const { error: uploadError } = await storage.storage
-      .from(BRANDING_BUCKET)
-      .upload(LOGO_OBJECT_PATH, bytes, { contentType: file.type, upsert: true });
-    if (uploadError) return { ok: false, error: uploadError.message };
+
+    // Primary path: upload with the signed-in admin's own client, authorised by
+    // the branding_admin_write RLS policy. This needs no server secret, so it
+    // works on any deployment (including ones without SUPABASE_SERVICE_ROLE_KEY).
+    const authed = await createClient();
+    let uploadError = (
+      await authed.storage
+        .from(BRANDING_BUCKET)
+        .upload(LOGO_OBJECT_PATH, bytes, { contentType: file.type, upsert: true })
+    ).error;
+
+    // Fallback: if the RLS/bucket path fails (e.g. a fresh project without the
+    // storage migration), retry with the service role when it is available.
+    if (uploadError) {
+      const admin = tryCreateAdminClient();
+      if (admin) {
+        await ensureBrandingBucket();
+        uploadError = (
+          await admin.storage
+            .from(BRANDING_BUCKET)
+            .upload(LOGO_OBJECT_PATH, bytes, { contentType: file.type, upsert: true })
+        ).error;
+      }
+    }
+
+    if (uploadError) {
+      return {
+        ok: false,
+        error: `Upload failed: ${uploadError.message}. Make sure the branding storage bucket and policies exist (run supabase/migrations/20260722190000_branding_logo.sql).`,
+      };
+    }
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : "Upload failed." };
   }
@@ -129,10 +151,20 @@ export async function removeOrganizationLogo(): Promise<ActionResult> {
   if (error) return { ok: false, error };
 
   try {
-    const storage = tryCreateAdminClient() ?? (await createClient());
-    const { error: removeError } = await storage.storage
-      .from(BRANDING_BUCKET)
-      .remove([LOGO_OBJECT_PATH]);
+    const authed = await createClient();
+    let removeError = (
+      await authed.storage.from(BRANDING_BUCKET).remove([LOGO_OBJECT_PATH])
+    ).error;
+
+    if (removeError) {
+      const admin = tryCreateAdminClient();
+      if (admin) {
+        removeError = (
+          await admin.storage.from(BRANDING_BUCKET).remove([LOGO_OBJECT_PATH])
+        ).error;
+      }
+    }
+
     if (removeError) return { ok: false, error: removeError.message };
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : "Remove failed." };
