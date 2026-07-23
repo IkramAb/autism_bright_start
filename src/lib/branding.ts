@@ -13,6 +13,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
  */
 export const BRANDING_BUCKET = "branding";
 export const LOGO_OBJECT_PATH = "logo";
+export const BRANDING_CONFIG_PATH = "config.json";
 
 export const LOGO_ALLOWED_MIME_TYPES = [
   "image/png",
@@ -23,6 +24,18 @@ export const LOGO_ALLOWED_MIME_TYPES = [
 ];
 
 export const LOGO_MAX_BYTES = 2 * 1024 * 1024; // 2 MB
+
+/** Display height (px) of the logo in the sidebar / sign-in screen. */
+export const DEFAULT_LOGO_HEIGHT = 40;
+export const MIN_LOGO_HEIGHT = 20;
+export const MAX_LOGO_HEIGHT = 96;
+
+export type Branding = { logoUrl: string | null; logoHeight: number };
+
+export function clampLogoHeight(value: number): number {
+  if (!Number.isFinite(value)) return DEFAULT_LOGO_HEIGHT;
+  return Math.min(MAX_LOGO_HEIGHT, Math.max(MIN_LOGO_HEIGHT, Math.round(value)));
+}
 
 /**
  * Returns a service-role client, or null when SUPABASE_SERVICE_ROLE_KEY is not
@@ -90,4 +103,34 @@ export async function getOrganizationLogoUrl(): Promise<string | null> {
   } catch {
     return null;
   }
+}
+
+/**
+ * Reads the stored logo display height from the branding config object, falling
+ * back to the default when unset or unavailable. Public read, no auth needed.
+ */
+export async function getLogoHeight(): Promise<number> {
+  const base = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  if (!base) return DEFAULT_LOGO_HEIGHT;
+
+  const url = `${base}/storage/v1/object/public/${BRANDING_BUCKET}/${BRANDING_CONFIG_PATH}`;
+  try {
+    const res = await fetch(url, { cache: "no-store" });
+    if (!res.ok) return DEFAULT_LOGO_HEIGHT;
+    const json = (await res.json()) as { logoHeight?: unknown };
+    return clampLogoHeight(Number(json?.logoHeight));
+  } catch {
+    return DEFAULT_LOGO_HEIGHT;
+  }
+}
+
+/**
+ * Convenience loader for both branding values in one call.
+ */
+export async function getBranding(): Promise<Branding> {
+  const [logoUrl, logoHeight] = await Promise.all([
+    getOrganizationLogoUrl(),
+    getLogoHeight(),
+  ]);
+  return { logoUrl, logoHeight };
 }

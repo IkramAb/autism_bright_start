@@ -26,7 +26,9 @@ import {
   updateRenewalRule,
   uploadOrganizationLogo,
   removeOrganizationLogo,
+  updateOrganizationLogoSize,
 } from "@/app/(app)/settings/actions";
+import { MIN_LOGO_HEIGHT, MAX_LOGO_HEIGHT } from "@/lib/branding";
 
 type Tab =
   | "organization"
@@ -162,6 +164,7 @@ export function SettingsView({ data }: { data: SettingsData }) {
             onSaveProfile={(fd) => run(() => updateAdminProfile(fd))}
             onUploadLogo={(fd) => run(() => uploadOrganizationLogo(fd))}
             onRemoveLogo={() => run(() => removeOrganizationLogo())}
+            onSaveLogoSize={(size) => run(() => updateOrganizationLogoSize(size))}
           />
         )}
 
@@ -285,6 +288,7 @@ function OrganizationPanel({
   onSaveProfile,
   onUploadLogo,
   onRemoveLogo,
+  onSaveLogoSize,
 }: {
   data: SettingsData;
   pending: boolean;
@@ -292,19 +296,22 @@ function OrganizationPanel({
   onSaveProfile: (fd: FormData) => void;
   onUploadLogo: (fd: FormData) => void;
   onRemoveLogo: () => void;
+  onSaveLogoSize: (size: number) => void;
 }) {
   return (
     <div className="st-panel">
       <div className="st-section-title">Practice logo</div>
       <div className="st-section-sub">
-        Appears in the sidebar and on the sign-in screen. Use a square PNG, JPG, SVG, WEBP, or GIF up
-        to 2 MB.
+        Appears in the sidebar and on the sign-in screen. A landscape (wide) PNG or SVG works best.
+        Max 2 MB.
       </div>
       <LogoUploader
         logoUrl={data.logoUrl}
+        logoHeight={data.logoHeight}
         pending={pending}
         onUpload={onUploadLogo}
         onRemove={onRemoveLogo}
+        onSaveSize={onSaveLogoSize}
       />
 
       <div className="st-section-title" style={{ marginTop: 24 }}>
@@ -960,18 +967,27 @@ function UsersPanel({ data, onInvite }: { data: SettingsData; onInvite: () => vo
 
 function LogoUploader({
   logoUrl,
+  logoHeight,
   pending,
   onUpload,
   onRemove,
+  onSaveSize,
 }: {
   logoUrl: string | null;
+  logoHeight: number;
   pending: boolean;
   onUpload: (fd: FormData) => void;
   onRemove: () => void;
+  onSaveSize: (size: number) => void;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
+  const [size, setSize] = useState(logoHeight);
+
+  useEffect(() => {
+    setSize(logoHeight);
+  }, [logoHeight]);
 
   function handleSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -988,85 +1004,131 @@ function LogoUploader({
   const shownImage = preview ?? logoUrl;
 
   return (
-    <form
-      className="full-card"
-      style={{ marginBottom: 0 }}
-      action={(fd) => {
-        onUpload(fd);
-        if (preview) URL.revokeObjectURL(preview);
-        setPreview(null);
-        setFileName(null);
-        if (inputRef.current) inputRef.current.value = "";
-      }}
-    >
-      <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-        <div
-          style={{
-            width: 64,
-            height: 64,
-            borderRadius: 14,
-            background: shownImage ? "#fff" : "var(--color-blue)",
-            border: "1px solid var(--color-line, #e5e7eb)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            overflow: "hidden",
-            flexShrink: 0,
-          }}
-        >
-          {shownImage ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={shownImage}
-              alt="Practice logo"
-              style={{ width: "100%", height: "100%", objectFit: "contain" }}
-            />
-          ) : (
-            <i className="ti ti-puzzle" style={{ fontSize: 26, color: "#fff" }} aria-hidden="true" />
-          )}
-        </div>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <input
-            ref={inputRef}
-            type="file"
-            name="logo"
-            accept="image/png,image/jpeg,image/svg+xml,image/webp,image/gif"
-            onChange={handleSelect}
-            style={{ fontSize: 12 }}
+    <div className="full-card" style={{ marginBottom: 0 }}>
+      {/* Live preview against a sidebar-like backdrop */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          minHeight: MAX_LOGO_HEIGHT + 28,
+          padding: 14,
+          borderRadius: 10,
+          background: "var(--color-sidebar, #f7f8fa)",
+          border: "1px solid var(--color-line, #e5e7eb)",
+          marginBottom: 14,
+        }}
+      >
+        {shownImage ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={shownImage}
+            alt="Practice logo preview"
+            style={{ height: size, maxHeight: size, maxWidth: "100%", objectFit: "contain" }}
           />
-          <div style={{ fontSize: 11, color: "var(--color-ink3)", marginTop: 6 }}>
-            {fileName
-              ? `Selected: ${fileName}`
-              : logoUrl
-                ? "A logo is set. Choose a file to replace it."
-                : "No logo uploaded yet."}
+        ) : (
+          <div style={{ display: "flex", alignItems: "center", gap: 10, color: "var(--color-ink3)" }}>
+            <i className="ti ti-photo" style={{ fontSize: 22 }} aria-hidden="true" />
+            <span style={{ fontSize: 12 }}>No logo uploaded yet</span>
           </div>
-        </div>
-      </div>
-      <div style={{ display: "flex", gap: 8, marginTop: 14 }}>
-        <button type="submit" className="btn btn-primary" disabled={pending || !fileName}>
-          <i className="ti ti-upload" style={{ fontSize: 13 }} aria-hidden="true" />
-          {logoUrl ? "Replace logo" : "Upload logo"}
-        </button>
-        {logoUrl && (
-          <button
-            type="button"
-            className="btn btn-outline"
-            disabled={pending}
-            onClick={() => {
-              if (preview) URL.revokeObjectURL(preview);
-              setPreview(null);
-              setFileName(null);
-              if (inputRef.current) inputRef.current.value = "";
-              onRemove();
-            }}
-          >
-            <i className="ti ti-trash" style={{ fontSize: 13 }} aria-hidden="true" />
-            Remove
-          </button>
         )}
       </div>
-    </form>
+
+      {/* Size control */}
+      {(logoUrl || preview) && (
+        <div style={{ marginBottom: 16 }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              marginBottom: 6,
+            }}
+          >
+            <label className="st-field-label" style={{ margin: 0 }}>
+              Display size
+            </label>
+            <span style={{ fontSize: 11, color: "var(--color-ink3)" }}>{size}px</span>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <i className="ti ti-photo" style={{ fontSize: 13, color: "var(--color-ink3)" }} aria-hidden="true" />
+            <input
+              type="range"
+              min={MIN_LOGO_HEIGHT}
+              max={MAX_LOGO_HEIGHT}
+              value={size}
+              onChange={(e) => setSize(parseInt(e.target.value, 10))}
+              style={{ flex: 1 }}
+            />
+            <i className="ti ti-photo" style={{ fontSize: 22, color: "var(--color-ink3)" }} aria-hidden="true" />
+            <button
+              type="button"
+              className="btn btn-outline"
+              style={{ fontSize: 11, padding: "5px 12px" }}
+              disabled={pending || !logoUrl || size === logoHeight}
+              onClick={() => onSaveSize(size)}
+            >
+              Save size
+            </button>
+          </div>
+          {!logoUrl && preview && (
+            <div style={{ fontSize: 11, color: "var(--color-ink3)", marginTop: 6 }}>
+              Upload the logo first, then the size can be saved.
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Upload controls */}
+      <form
+        action={(fd) => {
+          onUpload(fd);
+          if (preview) URL.revokeObjectURL(preview);
+          setPreview(null);
+          setFileName(null);
+          if (inputRef.current) inputRef.current.value = "";
+        }}
+      >
+        <input
+          ref={inputRef}
+          type="file"
+          name="logo"
+          accept="image/png,image/jpeg,image/svg+xml,image/webp,image/gif"
+          onChange={handleSelect}
+          style={{ fontSize: 12 }}
+        />
+        <div style={{ fontSize: 11, color: "var(--color-ink3)", marginTop: 6 }}>
+          {fileName
+            ? `Selected: ${fileName}`
+            : logoUrl
+              ? "A logo is set. Choose a file to replace it."
+              : "Choose a PNG, JPG, SVG, WEBP, or GIF up to 2 MB."}
+        </div>
+        <div style={{ display: "flex", gap: 8, marginTop: 14 }}>
+          <button type="submit" className="btn btn-primary" disabled={pending || !fileName}>
+            <i className="ti ti-upload" style={{ fontSize: 13 }} aria-hidden="true" />
+            {logoUrl ? "Replace logo" : "Upload logo"}
+          </button>
+          {logoUrl && (
+            <button
+              type="button"
+              className="btn btn-outline"
+              disabled={pending}
+              onClick={() => {
+                if (preview) URL.revokeObjectURL(preview);
+                setPreview(null);
+                setFileName(null);
+                if (inputRef.current) inputRef.current.value = "";
+                onRemove();
+              }}
+            >
+              <i className="ti ti-trash" style={{ fontSize: 13 }} aria-hidden="true" />
+              Remove
+            </button>
+          )}
+        </div>
+      </form>
+    </div>
   );
 }
 

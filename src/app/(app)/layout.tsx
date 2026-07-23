@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { getCurrentAdmin } from "@/lib/auth";
-import { getOrganizationLogoUrl } from "@/lib/branding";
+import { getBranding } from "@/lib/branding";
 import { Sidebar } from "@/components/shell/sidebar";
 import { Topbar } from "@/components/shell/topbar";
 
@@ -14,7 +14,7 @@ export default async function AppLayout({
   const admin = await getCurrentAdmin();
   if (!admin) redirect("/login");
 
-  const logoUrl = await getOrganizationLogoUrl();
+  const { logoUrl, logoHeight } = await getBranding();
 
   return (
     <div className="app-shell">
@@ -23,6 +23,7 @@ export default async function AppLayout({
         adminRole={admin.roleLabel}
         adminInitials={admin.initials}
         logoUrl={logoUrl}
+        logoHeight={logoHeight}
       />
       <div className="main">
         <Topbar adminName={admin.fullName} />

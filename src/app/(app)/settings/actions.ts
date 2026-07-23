@@ -5,9 +5,11 @@ import { createClient } from "@/lib/supabase/server";
 import { getCurrentAdmin } from "@/lib/auth";
 import {
   BRANDING_BUCKET,
+  BRANDING_CONFIG_PATH,
   LOGO_ALLOWED_MIME_TYPES,
   LOGO_MAX_BYTES,
   LOGO_OBJECT_PATH,
+  clampLogoHeight,
   ensureBrandingBucket,
   tryCreateAdminClient,
 } from "@/lib/branding";
@@ -144,6 +146,51 @@ export async function uploadOrganizationLogo(formData: FormData): Promise<Action
   revalidatePath("/settings");
   revalidatePath("/", "layout");
   return { ok: true, message: "Logo updated." };
+}
+
+export async function updateOrganizationLogoSize(size: number): Promise<ActionResult> {
+  const { error } = await requireAdmin();
+  if (error) return { ok: false, error };
+
+  const logoHeight = clampLogoHeight(Number(size));
+  const payload = new Uint8Array(
+    new TextEncoder().encode(JSON.stringify({ logoHeight })),
+  );
+
+  try {
+    const authed = await createClient();
+    let writeError = (
+      await authed.storage
+        .from(BRANDING_BUCKET)
+        .upload(BRANDING_CONFIG_PATH, payload, {
+          contentType: "application/json",
+          upsert: true,
+        })
+    ).error;
+
+    if (writeError) {
+      const admin = tryCreateAdminClient();
+      if (admin) {
+        await ensureBrandingBucket();
+        writeError = (
+          await admin.storage
+            .from(BRANDING_BUCKET)
+            .upload(BRANDING_CONFIG_PATH, payload, {
+              contentType: "application/json",
+              upsert: true,
+            })
+        ).error;
+      }
+    }
+
+    if (writeError) return { ok: false, error: writeError.message };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "Could not save size." };
+  }
+
+  revalidatePath("/settings");
+  revalidatePath("/", "layout");
+  return { ok: true, message: "Logo size saved." };
 }
 
 export async function removeOrganizationLogo(): Promise<ActionResult> {
