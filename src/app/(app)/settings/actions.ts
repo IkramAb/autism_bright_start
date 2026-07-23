@@ -2,7 +2,6 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { createAdminClient } from "@/lib/supabase/admin";
 import { getCurrentAdmin } from "@/lib/auth";
 import {
   BRANDING_BUCKET,
@@ -10,6 +9,7 @@ import {
   LOGO_MAX_BYTES,
   LOGO_OBJECT_PATH,
   ensureBrandingBucket,
+  tryCreateAdminClient,
 } from "@/lib/branding";
 import {
   connectApiKeyIntegration,
@@ -106,9 +106,12 @@ export async function uploadOrganizationLogo(formData: FormData): Promise<Action
 
   try {
     await ensureBrandingBucket();
-    const admin = createAdminClient();
+    // Prefer the service role when configured; otherwise fall back to the
+    // signed-in admin's client, authorised by the branding_admin_write RLS
+    // policy. Either path works — no service-role secret is required.
+    const storage = tryCreateAdminClient() ?? (await createClient());
     const bytes = new Uint8Array(await file.arrayBuffer());
-    const { error: uploadError } = await admin.storage
+    const { error: uploadError } = await storage.storage
       .from(BRANDING_BUCKET)
       .upload(LOGO_OBJECT_PATH, bytes, { contentType: file.type, upsert: true });
     if (uploadError) return { ok: false, error: uploadError.message };
@@ -126,8 +129,8 @@ export async function removeOrganizationLogo(): Promise<ActionResult> {
   if (error) return { ok: false, error };
 
   try {
-    const admin = createAdminClient();
-    const { error: removeError } = await admin.storage
+    const storage = tryCreateAdminClient() ?? (await createClient());
+    const { error: removeError } = await storage.storage
       .from(BRANDING_BUCKET)
       .remove([LOGO_OBJECT_PATH]);
     if (removeError) return { ok: false, error: removeError.message };
