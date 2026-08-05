@@ -97,7 +97,7 @@ export function StaffDirectoryView({ rows }: { rows: StaffListRow[] }) {
         </div>
       </div>
 
-      <div style={{ display: "flex", gap: 6, marginBottom: 14, flexWrap: "wrap" }}>
+      <div className="filter-tab-row">
         <button type="button" className={`cr-filter-btn${filter === "all" ? " active" : ""}`} onClick={() => setFilter("all")}>
           All staff ({rows.length})
         </button>

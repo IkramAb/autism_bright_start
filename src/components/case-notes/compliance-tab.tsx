@@ -25,48 +25,48 @@ export function ComplianceTab({ data }: { data: CaseNotesData }) {
       <div className="stat-row cn-stat-row">
         <StatCard
           icon="circle-check"
-          iconBg="var(--color-teal-light)"
-          iconColor="var(--color-teal-dark)"
+          iconBg="#EAF1FC"
+          iconColor="#5889E0"
           label="Notes confirmed"
           value={String(stats.confirmed)}
           sub={`of ${stats.expected} expected`}
-          subColor="var(--color-teal)"
+          subColor="#1A9A6E"
         />
         <StatCard
           icon="note"
-          iconBg="var(--color-blue-light)"
-          iconColor="var(--color-blue-dark)"
+          iconBg="#EAF1FC"
+          iconColor="#5889E0"
           label="Overridden"
           value={String(stats.overridden)}
           sub="resolved with a reason logged"
-          subColor="var(--color-blue)"
+          subColor="#5C6270"
         />
         <StatCard
           icon="circle-x"
-          iconBg="var(--color-coral-light)"
-          iconColor="var(--color-coral-dark)"
+          iconBg="#EAF1FC"
+          iconColor="#5889E0"
           label="Still missing"
           value={String(stats.missing)}
           sub={`across ${stats.missingClientCount} client${stats.missingClientCount === 1 ? "" : "s"}`}
-          subColor="var(--color-coral)"
+          subColor="#E0524B"
         />
         <StatCard
           icon="alert-triangle"
-          iconBg="var(--color-amber-light)"
-          iconColor="var(--color-amber-dark)"
+          iconBg="#EAF1FC"
+          iconColor="#5889E0"
           label="Unassigned sessions"
           value={String(stats.unassignedSessions)}
           sub="needs a BT before it can be checked"
-          subColor="var(--color-amber)"
+          subColor="#EF9F27"
         />
         <StatCard
           icon="chart-bar"
-          iconBg="var(--color-teal-light)"
-          iconColor="var(--color-teal-dark)"
+          iconBg="#EAF1FC"
+          iconColor="#5889E0"
           label="Compliance rate"
           value={`${stats.complianceRate}%`}
           sub="confirmed + overridden"
-          subColor="var(--color-teal)"
+          subColor="#1A9A6E"
         />
       </div>
 
@@ -124,31 +124,30 @@ export function ComplianceTab({ data }: { data: CaseNotesData }) {
       </div>
 
       {data.missingNotes.length > 0 && (
-        <div className="full-card cn-missing-banner">
-          <div style={{ fontSize: 13, fontWeight: 600, color: "var(--color-coral-dark)", marginBottom: 8 }}>
-            <i
-              className="ti ti-alert-triangle"
-              style={{ fontSize: 14, verticalAlign: -2, marginRight: 4 }}
-            />
-            Missing case notes — action needed
-          </div>
-          <div style={{ fontSize: 12, color: "var(--color-coral-dark)", lineHeight: 1.8 }}>
-            {data.missingNotes.map((m) => (
-              <div key={m.clientId}>{m.line}</div>
-            ))}
-          </div>
-          <button
-            type="button"
-            className="btn"
-            style={{ marginTop: 10, background: "var(--color-coral)", color: "#fff", fontSize: 12 }}
-            onClick={handleReminders}
-            disabled={pending}
-          >
-            <i className="ti ti-mail" style={{ fontSize: 13 }} /> Email BTs about missing notes
-          </button>
-          <div style={{ fontSize: 11, color: "var(--color-coral-dark)", marginTop: 6, opacity: 0.8 }}>
-            Sent to the BT who was assigned that session, plus their administrator — no client info
-            included in the email.
+        <div className="alert-row alert-row-coral" style={{ flexDirection: "column", alignItems: "stretch" }}>
+          <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+            <i className="ti ti-alert-triangle" aria-hidden="true" />
+            <div className="alert-row-body">
+              <div className="alert-row-title">Missing case notes — action needed</div>
+              <div style={{ fontSize: 12, color: "#5c6270", lineHeight: 1.7 }}>
+                {data.missingNotes.map((m) => (
+                  <div key={m.clientId}>{m.line}</div>
+                ))}
+              </div>
+              <button
+                type="button"
+                className="btn btn-primary"
+                style={{ marginTop: 10, fontSize: 12 }}
+                onClick={handleReminders}
+                disabled={pending}
+              >
+                <i className="ti ti-mail" style={{ fontSize: 13 }} aria-hidden="true" /> Email BTs
+                about missing notes
+              </button>
+              <div className="notice-inline" style={{ margin: "8px 0 0" }}>
+                Sent to the assigned BT and their administrator — no client info in the email.
+              </div>
+            </div>
           </div>
         </div>
       )}

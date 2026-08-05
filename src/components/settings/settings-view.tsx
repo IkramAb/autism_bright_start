@@ -449,22 +449,13 @@ function RenewalsPanel({
             onChange={onToggleRepeat}
           />
         </div>
-        <div
-          style={{
-            marginTop: 14,
-            padding: "10px 14px",
-            background: "var(--color-teal-light)",
-            borderRadius: 8,
-            fontSize: 12,
-            color: "var(--color-teal-dark)",
-          }}
-        >
-          <i className="ti ti-repeat" style={{ fontSize: 13, marginRight: 4 }} aria-hidden="true" />
-          Currently <strong>{data.itpWeeklyRepeatEnabled ? "on" : "off"}</strong>
+        <p className="notice-inline" style={{ marginTop: 14, marginBottom: 0 }}>
+          <i className="ti ti-repeat" aria-hidden="true" />
+          Currently <strong style={{ color: "#5c6270" }}>{data.itpWeeklyRepeatEnabled ? "on" : "off"}</strong>
           {data.itpWeeklyRepeatEnabled
             ? " — an overdue ITP will keep getting a weekly reminder until it's marked received."
             : " — reminders stop after the 2-week notice."}
-        </div>
+        </p>
       </div>
     </div>
   );
@@ -608,7 +599,7 @@ function ChecklistsPanel({
         Add, remove, or reorder what&apos;s required for new staff and new clients. Changes apply to
         the template — not anyone already in progress.
       </div>
-      <div style={{ display: "flex", gap: 6, marginBottom: 14 }}>
+      <div className="filter-tab-row">
         <button
           type="button"
           className={`cr-filter-btn${view === "staff" ? " active" : ""}`}
@@ -731,22 +722,13 @@ function GatePanel({
           </div>
           <ToggleSwitch checked={enabled} disabled={pending} onChange={onToggle} />
         </div>
-        <div
-          style={{
-            marginTop: 14,
-            padding: "10px 14px",
-            background: enabled ? "var(--color-teal-light)" : "var(--color-amber-light)",
-            borderRadius: 8,
-            fontSize: 12,
-            color: enabled ? "var(--color-teal-dark)" : "var(--color-amber-dark)",
-          }}
-        >
-          <i className="ti ti-shield-check" style={{ fontSize: 13, marginRight: 4 }} aria-hidden="true" />
-          Currently <strong>{enabled ? "enforced" : "not enforced"}</strong>
+        <p className="notice-inline" style={{ marginTop: 14, marginBottom: 0 }}>
+          <i className="ti ti-shield-check" aria-hidden="true" />
+          Currently <strong style={{ color: "#5c6270" }}>{enabled ? "enforced" : "not enforced"}</strong>
           {enabled
             ? " — this is the default and recommended setting."
             : " — admin can proceed with a warning only."}
-        </div>
+        </p>
       </div>
     </div>
   );
@@ -869,41 +851,18 @@ function IntegrationsPanel({
         );
       })}
 
-      <div
-        className="full-card"
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 14,
-          background: "var(--color-amber-light)",
-          borderColor: "#FAC775",
-        }}
-      >
-        <div
-          style={{
-            width: 40,
-            height: 40,
-            borderRadius: 10,
-            background: "#fff",
-            color: "var(--color-amber-dark)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            flexShrink: 0,
-          }}
-        >
+      <div className="action-card" style={{ display: "flex", alignItems: "center", gap: 14 }}>
+        <div className="action-card-icon">
           <i className="ti ti-lock" style={{ fontSize: 19 }} aria-hidden="true" />
         </div>
-        <div style={{ flex: 1 }}>
-          <div style={{ fontSize: 13, fontWeight: 600, color: "var(--color-amber-dark)" }}>Catalyst</div>
-          <div style={{ fontSize: 12, color: "var(--color-amber-dark)", marginTop: 2, lineHeight: 1.6 }}>
-            No API integration available — confirmed directly with Catalyst support. &quot;Go to
-            Catalyst&quot; buttons open their general login only; there&apos;s no record-level linking.
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div className="action-card-title">Catalyst</div>
+          <div className="action-card-sub">
+            No API integration available — confirmed with Catalyst support. &quot;Go to Catalyst&quot;
+            buttons open their general login only; there&apos;s no record-level linking.
           </div>
         </div>
-        <span className="pill" style={{ background: "#fff", color: "var(--color-amber-dark)" }}>
-          No API
-        </span>
+        <span className="pill pill-gray">No API</span>
       </div>
     </div>
   );

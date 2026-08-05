@@ -48,7 +48,7 @@ export function TrainingView({ rows }: { rows: TrainingFlatRow[] }) {
       {showUpload && <UploadCertModal rows={rows} onClose={() => setShowUpload(false)} />}
       <p className="page-meta">All staff · all required trainings</p>
 
-      <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+      <div className="filter-tab-row">
         {(["all", "overdue", "pending", "complete"] as const).map((f) => (
           <button key={f} type="button" className={`cr-filter-btn${filter === f ? " active" : ""}`} onClick={() => setFilter(f)}>
             {f === "all" ? `All (${counts.all})` : f === "overdue" ? `Overdue (${counts.overdue})` : f === "pending" ? `Pending (${counts.pending})` : `Completed (${counts.complete})`}

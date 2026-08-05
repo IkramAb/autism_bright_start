@@ -64,13 +64,11 @@ export function PipelineView({
         </div>
       </div>
 
-      <div className="cn-info-banner" style={{ margin: 16, flexShrink: 0 }}>
+      <p className="notice-inline" style={{ margin: "12px 16px 0", flexShrink: 0 }}>
         <i className="ti ti-shield-check" aria-hidden="true" />
-        <div>
-          <strong>HIPAA-conscious design:</strong> Clients are shown by reference code, not name.
-          Full identity and case notes stay in Catalyst; all documents live in Google Drive.
-        </div>
-      </div>
+        Clients are shown by reference code, not name. Full identity and case notes stay in
+        Catalyst; all documents live in Google Drive.
+      </p>
 
       {view === "board" ? (
         <div style={{ flex: 1, overflowX: "auto", overflowY: "hidden", padding: 16, display: "flex", gap: 12, alignItems: "flex-start", minHeight: 0 }}>

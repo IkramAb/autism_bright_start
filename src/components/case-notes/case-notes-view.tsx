@@ -69,15 +69,13 @@ export function CaseNotesView({ data }: { data: CaseNotesData }) {
       </div>
 
       <div className="page-body">
-        <div className="cn-info-banner">
+        <p className="notice-inline">
           <i className="ti ti-shield-check" aria-hidden="true" />
-          <div>
-            <strong>No note content lives here.</strong> This only tracks whether a note was
-            submitted in Catalyst — never what it said. Every child needs 2 notes/day; admin uploads
-            the weekly Catalyst export to auto-check most of it, then resolves anything left over
-            manually or with a logged override.
-          </div>
-        </div>
+          No note content is stored here — this only tracks whether a note was submitted in
+          Catalyst, never what it said. Every child needs 2 notes/day; upload the weekly Catalyst
+          export to auto-check most of it, then resolve leftovers manually or with a logged
+          override.
+        </p>
 
         <div className="cn-tab-row">
           <TabBtn active={tab === "schedule"} onClick={() => setTab("schedule")} icon="calendar-event">

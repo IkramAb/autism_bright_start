@@ -84,17 +84,9 @@ export function ClientDetailView({ client }: { client: ClientDetail }) {
     <div>
       {showEdit && <EditClientModal client={client} onClose={() => setShowEdit(false)} />}
       {deleteError && (
-        <div
-          style={{
-            marginBottom: 12,
-            padding: "8px 10px",
-            background: "var(--color-coral-light)",
-            borderRadius: 8,
-            fontSize: 12,
-            color: "var(--color-coral-dark)",
-          }}
-        >
-          {deleteError}
+        <div className="alert-row alert-row-coral" style={{ marginBottom: 12 }}>
+          <i className="ti ti-alert-triangle" aria-hidden="true" />
+          <div className="alert-row-body">{deleteError}</div>
         </div>
       )}
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
@@ -271,19 +263,9 @@ export function ClientDetailView({ client }: { client: ClientDetail }) {
             <div className="section-title" style={{ marginBottom: 12 }}>Intake pipeline stage</div>
             <PipelineStrip activeIndex={client.stripIndex} />
             {client.pipelineAlert && (
-              <div
-                style={{
-                  marginTop: 10,
-                  padding: "8px 10px",
-                  background: "var(--color-amber-light)",
-                  borderRadius: 8,
-                  border: "0.5px solid #fac775",
-                  fontSize: 12,
-                  color: "var(--color-amber-dark)",
-                }}
-              >
-                <i className="ti ti-clock" style={{ fontSize: 13, marginRight: 4 }} />
-                {client.pipelineAlert}
+              <div className="alert-row alert-row-amber" style={{ marginTop: 12 }}>
+                <i className="ti ti-clock" aria-hidden="true" />
+                <div className="alert-row-body">{client.pipelineAlert}</div>
               </div>
             )}
           </div>

@@ -1,9 +1,12 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { NAV_GROUPS } from "@/lib/nav";
 import { signOut } from "@/app/login/actions";
+
+const STORAGE_KEY = "aba-sidebar-collapsed";
 
 type Props = {
   adminName: string;
@@ -18,38 +21,83 @@ export function Sidebar({
   adminRole,
   adminInitials,
   logoUrl,
-  logoHeight = 40,
+  logoHeight = 52,
 }: Props) {
   const pathname = usePathname();
+  const [collapsed, setCollapsed] = useState(false);
+  const [hydrated, setHydrated] = useState(false);
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (stored === "1") setCollapsed(true);
+    } catch {
+      /* ignore */
+    }
+    setHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    if (!hydrated) return;
+    try {
+      localStorage.setItem(STORAGE_KEY, collapsed ? "1" : "0");
+    } catch {
+      /* ignore */
+    }
+  }, [collapsed, hydrated]);
+
+  // Prefer a more visible logo; never go below 48px when expanded
+  const displayHeight = Math.max(logoHeight, 48);
 
   return (
-    <aside className="sidebar">
+    <aside className={`sidebar${collapsed ? " sidebar-collapsed" : ""}`}>
       <div className="sidebar-logo">
-        {logoUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={logoUrl}
-            alt="Practice logo"
-            className="brand-logo"
-            style={{ height: logoHeight, maxHeight: logoHeight }}
+        <div className="sidebar-logo-main">
+          {logoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={logoUrl}
+              alt="Practice logo"
+              className="brand-logo"
+              style={
+                collapsed
+                  ? { height: 28, maxHeight: 28, maxWidth: 36 }
+                  : { height: displayHeight, maxHeight: displayHeight }
+              }
+            />
+          ) : (
+            <div className={`sidebar-brand-fallback${collapsed ? " is-collapsed" : ""}`}>
+              <div className="logo-icon">
+                <i className="ti ti-puzzle" aria-hidden="true" />
+              </div>
+              {!collapsed && (
+                <div>
+                  <div className="logo-name">ABA Connect</div>
+                  <div className="logo-sub">Admin portal</div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+        <button
+          type="button"
+          className="sidebar-toggle"
+          onClick={() => setCollapsed((v) => !v)}
+          title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          aria-expanded={!collapsed}
+        >
+          <i
+            className={`ti ${collapsed ? "ti-layout-sidebar-left-expand" : "ti-layout-sidebar-left-collapse"}`}
+            aria-hidden="true"
           />
-        ) : (
-          <div className="flex items-center gap-2.5">
-            <div className="logo-icon">
-              <i className="ti ti-puzzle" aria-hidden="true" />
-            </div>
-            <div>
-              <div className="logo-name">ABA Connect</div>
-              <div className="logo-sub">Admin portal</div>
-            </div>
-          </div>
-        )}
+        </button>
       </div>
 
       <nav className="nav">
         {NAV_GROUPS.map((group) => (
-          <div key={group.label} className="mb-1">
-            <div className="nav-label">{group.label}</div>
+          <div key={group.label} className="nav-group">
+            {!collapsed && <div className="nav-label">{group.label}</div>}
             {group.items.map((item) => {
               const active =
                 pathname === item.href || pathname.startsWith(item.href + "/");
@@ -58,13 +106,17 @@ export function Sidebar({
                   key={item.href}
                   href={item.href}
                   className={`nav-item${active ? " active" : ""}`}
+                  title={collapsed ? item.label : undefined}
                 >
                   <i className={`ti ti-${item.icon}`} aria-hidden="true" />
-                  <span>{item.label}</span>
-                  {item.badge && (
+                  {!collapsed && <span>{item.label}</span>}
+                  {!collapsed && item.badge && (
                     <span className={`nav-badge nav-badge-${item.badge.tone}`}>
                       {item.badge.count}
                     </span>
+                  )}
+                  {collapsed && item.badge && (
+                    <span className={`nav-badge nav-badge-dot nav-badge-${item.badge.tone}`} />
                   )}
                 </Link>
               );
@@ -74,23 +126,29 @@ export function Sidebar({
       </nav>
 
       <div className="sidebar-foot">
-        <div className="user-row">
-          <div className="avatar">{adminInitials}</div>
-          <div className="min-w-0 flex-1">
-            <div className="user-name truncate">{adminName}</div>
-            <div className="user-role truncate">{adminRole}</div>
+        <div className={`user-row${collapsed ? " user-row-collapsed" : ""}`}>
+          <div className="avatar" title={collapsed ? `${adminName} · ${adminRole}` : undefined}>
+            {adminInitials}
           </div>
-          <form action={signOut}>
-            <button
-              type="submit"
-              title="Sign out"
-              aria-label="Sign out"
-              className="icon-btn"
-              style={{ width: 28, height: 28 }}
-            >
-              <i className="ti ti-logout" aria-hidden="true" />
-            </button>
-          </form>
+          {!collapsed && (
+            <>
+              <div className="min-w-0 flex-1">
+                <div className="user-name truncate">{adminName}</div>
+                <div className="user-role truncate">{adminRole}</div>
+              </div>
+              <form action={signOut}>
+                <button
+                  type="submit"
+                  title="Sign out"
+                  aria-label="Sign out"
+                  className="icon-btn"
+                  style={{ width: 28, height: 28 }}
+                >
+                  <i className="ti ti-logout" aria-hidden="true" />
+                </button>
+              </form>
+            </>
+          )}
         </div>
       </div>
     </aside>

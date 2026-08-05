@@ -310,9 +310,9 @@ export function DashboardView({ data }: { data: DashboardData }) {
             );
           })}
           {data.missingCaseNoteSummary && (
-            <div className="case-missing-banner">
-              <i className="ti ti-alert-triangle" style={{ fontSize: 12, marginRight: 4 }} aria-hidden="true" />
-              {data.missingCaseNoteSummary}
+            <div className="alert-row alert-row-coral case-missing-banner">
+              <i className="ti ti-alert-triangle" aria-hidden="true" />
+              <div className="alert-row-body">{data.missingCaseNoteSummary}</div>
             </div>
           )}
         </div>

@@ -102,12 +102,16 @@ export function UploadDocModal({
           <input className="modal-input" name="drive_url" required placeholder="https://drive.google.com/file/…" />
         </div>
         {missing.length === 0 && (
-          <div style={{ fontSize: 12, color: "var(--color-teal-dark)", marginBottom: 12 }}>
+          <p className="notice-inline" style={{ marginBottom: 12 }}>
+            <i className="ti ti-info-circle" aria-hidden="true" />
             No missing documents — all tracked files are uploaded or in progress.
-          </div>
+          </p>
         )}
         {error && (
-          <div style={{ fontSize: 12, color: "var(--color-coral-dark)", marginBottom: 12 }}>{error}</div>
+          <div className="alert-row alert-row-coral" style={{ marginBottom: 12 }}>
+            <i className="ti ti-alert-triangle" aria-hidden="true" />
+            <div className="alert-row-body">{error}</div>
+          </div>
         )}
         <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
           <button type="button" className="btn btn-outline" onClick={onClose}>

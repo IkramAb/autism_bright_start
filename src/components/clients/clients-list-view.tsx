@@ -61,7 +61,7 @@ export function ClientsListView({ data }: { data: ClientListData }) {
         </div>
       </div>
 
-      <div style={{ display: "flex", gap: 6, marginBottom: 14, flexWrap: "wrap" }}>
+      <div className="filter-tab-row">
         <FilterBtn active={filter === "all"} onClick={() => setFilter("all")}>
           All clients ({counts.all})
         </FilterBtn>

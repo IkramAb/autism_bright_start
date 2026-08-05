@@ -49,11 +49,11 @@ export function ScheduleTab({ data }: { data: CaseNotesData }) {
           marginBottom: 10,
         }}
       >
-        <div style={{ fontSize: 12, color: "var(--color-ink2)", lineHeight: 1.6, maxWidth: 560 }}>
-          This is the source of truth for who&apos;s assigned to who. Update it the moment a BT
-          calls out sick or a session is reassigned — everything downstream (check-off +
-          compliance) reads from this.
-        </div>
+        <p className="notice-inline" style={{ margin: 0, maxWidth: 560 }}>
+          <i className="ti ti-info-circle" aria-hidden="true" />
+          This is the source of truth for who&apos;s assigned to who. Update it when a BT calls out
+          or a session is reassigned — check-off and compliance read from this.
+        </p>
         <button
           type="button"
           className="btn btn-primary"
@@ -65,7 +65,10 @@ export function ScheduleTab({ data }: { data: CaseNotesData }) {
       </div>
 
       {message && (
-        <div style={{ fontSize: 12, color: "var(--color-teal-dark)", marginBottom: 10 }}>{message}</div>
+        <div className="alert-row alert-row-teal" style={{ marginBottom: 10 }}>
+          <i className="ti ti-check" aria-hidden="true" />
+          <div className="alert-row-body">{message}</div>
+        </div>
       )}
 
       <div className="full-card" style={{ padding: 0, overflow: "hidden" }}>

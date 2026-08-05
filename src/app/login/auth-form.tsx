@@ -271,15 +271,17 @@ function AuthFeedback({
 }) {
   if (error) {
     return (
-      <div className="rounded-[8px] bg-coral-light px-3 py-2 text-xs font-medium text-coral-dark">
-        {error}
+      <div className="alert-row alert-row-coral">
+        <i className="ti ti-alert-triangle" aria-hidden="true" />
+        <div className="alert-row-body">{error}</div>
       </div>
     );
   }
   if (message) {
     return (
-      <div className="rounded-[8px] bg-teal-light px-3 py-2 text-xs font-medium text-teal-dark">
-        {message}
+      <div className="alert-row alert-row-teal">
+        <i className="ti ti-check" aria-hidden="true" />
+        <div className="alert-row-body">{message}</div>
       </div>
     );
   }

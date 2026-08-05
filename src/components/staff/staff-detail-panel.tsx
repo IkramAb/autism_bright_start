@@ -117,8 +117,9 @@ export function StaffDetailPanel({
         </div>
       </div>
       {deleteError && (
-        <div style={{ marginBottom: 12, padding: "8px 10px", background: "var(--color-coral-light)", borderRadius: 8, fontSize: 12, color: "var(--color-coral-dark)" }}>
-          {deleteError}
+        <div className="alert-row alert-row-coral" style={{ marginBottom: 12 }}>
+          <i className="ti ti-alert-triangle" aria-hidden="true" />
+          <div className="alert-row-body">{deleteError}</div>
         </div>
       )}
 
@@ -159,7 +160,7 @@ export function StaffDetailPanel({
         </div>
 
         <div>
-          <div style={{ display: "flex", gap: 6, marginBottom: 12, flexWrap: "wrap" }}>
+          <div className="filter-tab-row">
             {(["onboarding", "trainings", "documents", "background"] as const).map((t) => (
               <button key={t} type="button" className={`cr-filter-btn${tab === t ? " active" : ""}`} onClick={() => setTab(t)} style={{ textTransform: "capitalize" }}>
                 {t}
@@ -168,8 +169,9 @@ export function StaffDetailPanel({
           </div>
 
           {staff.alert && (
-            <div style={{ marginBottom: 12, padding: "10px 12px", background: "var(--color-coral-light)", borderRadius: 8, fontSize: 12, color: "var(--color-coral-dark)" }}>
-              <i className="ti ti-alert-triangle" style={{ marginRight: 4 }} />{staff.alert}
+            <div className="alert-row alert-row-coral" style={{ marginBottom: 12 }}>
+              <i className="ti ti-alert-triangle" aria-hidden="true" />
+              <div className="alert-row-body">{staff.alert}</div>
             </div>
           )}
 
@@ -195,12 +197,7 @@ export function StaffDetailPanel({
                         padding: "5px 0",
                         fontSize: 12,
                         opacity: item.locked ? 0.7 : 1,
-                        cursor: item.locked ? "pointer" : "pointer",
-                        background: item.locked ? "var(--color-coral-light)" : undefined,
-                        borderRadius: item.locked ? 6 : undefined,
-                        margin: item.locked ? "2px -6px" : undefined,
-                        paddingLeft: item.locked ? 6 : undefined,
-                        paddingRight: item.locked ? 6 : undefined,
+                        cursor: "pointer",
                       }}
                       onClick={(e) => {
                         if (item.locked) {

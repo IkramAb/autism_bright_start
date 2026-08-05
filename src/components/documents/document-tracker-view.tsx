@@ -51,11 +51,11 @@ export function DocumentTrackerView({ data }: { data: DocTrackerData }) {
   return (
     <div>
       {showUpload && <UploadDocModal data={data} onClose={() => setShowUpload(false)} />}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <p className="page-meta">All clients · all documents in one place</p>
-      </div>
+      <p className="page-meta" style={{ marginBottom: 12 }}>
+        All clients · all documents in one place
+      </p>
 
-      <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+      <div className="filter-tab-row">
         <FilterTab active={filter === "all"} onClick={() => setFilter("all")}>
           All documents ({filterCounts.all})
         </FilterTab>
@@ -80,30 +80,46 @@ export function DocumentTrackerView({ data }: { data: DocTrackerData }) {
         </FilterTab>
       </div>
 
-      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+      <div className="doc-client-list">
         {clients.map((client) => {
           const isOpen = openIds.has(client.id);
           return (
             <div key={client.id} className="doc-client-card">
               <div className="doc-client-head" onClick={() => toggle(client.id)}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <div className="init" style={{ width: 32, height: 32, fontSize: 11, background: client.initBg, color: client.initColor }}>
+                  <div
+                    className="init"
+                    style={{
+                      width: 32,
+                      height: 32,
+                      fontSize: 11,
+                      background: client.initBg,
+                      color: client.initColor,
+                    }}
+                  >
                     <i className="ti ti-user" style={{ fontSize: 11 }} />
                   </div>
                   <div>
                     <Link
                       href={`/clients/${client.id}`}
                       onClick={(e) => e.stopPropagation()}
-                      style={{ fontSize: 13, fontWeight: 600, color: "var(--color-ink)", textDecoration: "none" }}
+                      style={{
+                        fontSize: 13,
+                        fontWeight: 600,
+                        color: "var(--color-ink)",
+                        textDecoration: "none",
+                      }}
                     >
                       Client #{client.refCode}
                     </Link>
-                    <div style={{ fontSize: 11, color: "var(--color-ink3)", marginTop: 1 }}>{client.context}</div>
+                    <div style={{ fontSize: 11, color: "var(--color-ink3)", marginTop: 1 }}>
+                      {client.context}
+                    </div>
                   </div>
                 </div>
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <div className="doc-client-pills">
                   {client.summaryPills.map((p) => (
-                    <span key={p.label} className={`pill ${p.className}`} style={{ fontSize: 10 }}>
+                    <span key={p.label} className={`pill ${p.className}`}>
                       {p.label}
                     </span>
                   ))}

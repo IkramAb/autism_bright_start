@@ -26,8 +26,8 @@ export const LOGO_ALLOWED_MIME_TYPES = [
 export const LOGO_MAX_BYTES = 2 * 1024 * 1024; // 2 MB
 
 /** Display height (px) of the logo in the sidebar / sign-in screen. */
-export const DEFAULT_LOGO_HEIGHT = 40;
-export const MIN_LOGO_HEIGHT = 20;
+export const DEFAULT_LOGO_HEIGHT = 52;
+export const MIN_LOGO_HEIGHT = 28;
 export const MAX_LOGO_HEIGHT = 96;
 
 export type Branding = { logoUrl: string | null; logoHeight: number };

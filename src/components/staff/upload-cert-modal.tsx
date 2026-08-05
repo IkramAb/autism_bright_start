@@ -79,7 +79,10 @@ export function UploadCertModal({
           <input className="modal-input" name="drive_url" placeholder="https://drive.google.com/file/…" />
         </div>
         {error && (
-          <div style={{ fontSize: 12, color: "var(--color-coral-dark)", marginBottom: 12 }}>{error}</div>
+          <div className="alert-row alert-row-coral" style={{ marginBottom: 12 }}>
+            <i className="ti ti-alert-triangle" aria-hidden="true" />
+            <div className="alert-row-body">{error}</div>
+          </div>
         )}
         <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
           <button type="button" className="btn btn-outline" onClick={onClose}>

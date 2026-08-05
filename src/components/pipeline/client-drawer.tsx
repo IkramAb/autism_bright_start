@@ -145,7 +145,10 @@ export function ClientDrawer({ card, onClose }: { card: CardView; onClose: () =>
           </div>
 
           {error && (
-            <div style={{ fontSize: 12, color: "var(--color-coral-dark)", background: "var(--color-coral-light)", borderRadius: 8, padding: "8px 10px" }}>{error}</div>
+            <div className="alert-row alert-row-coral">
+              <i className="ti ti-alert-triangle" aria-hidden="true" />
+              <div className="alert-row-body">{error}</div>
+            </div>
           )}
 
           {/* Actions */}

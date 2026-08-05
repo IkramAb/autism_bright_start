@@ -63,39 +63,26 @@ export function CheckoffTab({ data }: { data: CaseNotesData }) {
           marginBottom: 10,
         }}
       >
-        <div style={{ fontSize: 12, color: "var(--color-ink2)", lineHeight: 1.6, maxWidth: 640 }}>
-          Every child needs 2 case notes a day. Upload this week&apos;s case notes export from
-          Catalyst and the system will auto-check what matches the schedule — or check boxes
-          manually below. If one&apos;s genuinely missing, click <strong>Override</strong> and log
-          why instead of leaving it unresolved.
-        </div>
+        <p className="notice-inline" style={{ margin: 0, maxWidth: 640 }}>
+          <i className="ti ti-info-circle" aria-hidden="true" />
+          Every child needs 2 case notes a day. Upload this week&apos;s Catalyst export to
+          auto-check against the schedule, or check boxes manually. If one&apos;s genuinely
+          missing, use Override and log why.
+        </p>
         <span style={{ fontSize: 11, color: "var(--color-ink3)", flexShrink: 0 }}>
           {data.checkoffSummary}
         </span>
       </div>
 
-      <div
-        className="full-card cn-upload-card"
-        style={{ marginBottom: 14 }}
-      >
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            gap: 16,
-            flexWrap: "wrap",
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <div className="cn-upload-icon">
-              <i className="ti ti-file-spreadsheet" style={{ fontSize: 19 }} />
+      <div className="action-card cn-upload-card" style={{ marginBottom: 16 }}>
+        <div className="action-card-row">
+          <div className="action-card-main">
+            <div className="action-card-icon cn-upload-icon">
+              <i className="ti ti-file-spreadsheet" style={{ fontSize: 19 }} aria-hidden="true" />
             </div>
             <div>
-              <div style={{ fontSize: 13, fontWeight: 600, color: "var(--color-blue-dark)" }}>
-                Upload case notes report
-              </div>
-              <div style={{ fontSize: 11, color: "var(--color-blue-dark)", opacity: 0.85, marginTop: 1 }}>
+              <div className="action-card-title">Upload case notes report</div>
+              <div className="action-card-sub">
                 Export from Catalyst (Student, Service Date, Session Time, User) — we&apos;ll match
                 it against this week&apos;s schedule and auto-check what lines up.
               </div>
@@ -115,7 +102,7 @@ export function CheckoffTab({ data }: { data: CaseNotesData }) {
               onClick={() => fileRef.current?.click()}
               disabled={pending}
             >
-              <i className="ti ti-upload" style={{ fontSize: 13 }} /> Upload report
+              <i className="ti ti-upload" style={{ fontSize: 13 }} aria-hidden="true" /> Upload report
             </button>
           </div>
         </div>
