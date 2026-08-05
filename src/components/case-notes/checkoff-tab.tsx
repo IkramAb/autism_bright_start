@@ -147,9 +147,7 @@ export function CheckoffTab({ data }: { data: CaseNotesData }) {
                 <td style={{ fontSize: 12, color: "var(--color-ink2)" }}>{row.dateLabel}</td>
                 <td style={{ fontSize: 12 }}>
                   {row.isUnassigned ? (
-                    <span style={{ fontSize: 11, color: "var(--color-coral)", fontWeight: 500 }}>
-                      Unassigned
-                    </span>
+                    <span className="pill pill-coral">Unassigned</span>
                   ) : (
                     <>
                       {row.assignedStaffLabel}
@@ -158,12 +156,15 @@ export function CheckoffTab({ data }: { data: CaseNotesData }) {
                   )}
                 </td>
                 {row.isUnassigned ? (
-                  <td colSpan={2} style={{ fontSize: 11, color: "var(--color-coral)" }}>
-                    <i
-                      className="ti ti-alert-triangle"
-                      style={{ fontSize: 12, verticalAlign: -2, marginRight: 3 }}
-                    />
-                    No BT was assigned — fix in schedule tab first
+                  <td colSpan={2}>
+                    <span className="pill pill-coral">
+                      <i
+                        className="ti ti-alert-triangle"
+                        style={{ fontSize: 12 }}
+                        aria-hidden="true"
+                      />
+                      No BT assigned — fix in schedule
+                    </span>
                   </td>
                 ) : (
                   <>
@@ -215,12 +216,12 @@ export function CheckoffTab({ data }: { data: CaseNotesData }) {
         }}
       >
         <span style={{ display: "flex", alignItems: "center", gap: 5 }}>
-          <i className="ti ti-note" style={{ fontSize: 12, color: "var(--color-blue)" }} />
-          Overridden — admin logged a reason instead of a checkmark
+          <span className="pill pill-gray">Overridden</span>
+          <span>admin logged a reason instead of a checkmark</span>
         </span>
         <span style={{ display: "flex", alignItems: "center", gap: 5 }}>
-          <i className="ti ti-alert-triangle" style={{ fontSize: 12, color: "var(--color-coral)" }} />
-          No BT assigned — needs action in schedule tab
+          <span className="pill pill-coral">No BT assigned</span>
+          <span>needs action in schedule tab</span>
         </span>
       </div>
 

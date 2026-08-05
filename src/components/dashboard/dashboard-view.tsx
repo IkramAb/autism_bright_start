@@ -5,12 +5,58 @@ import Link from "next/link";
 import type { DashboardData } from "@/lib/dashboard";
 import { AddClientModal } from "@/components/pipeline/modals";
 
-/** Map any status class to the three allowed status pills (or neutral gray). */
-function statusPillClass(raw: string): string {
-  if (raw.includes("coral") || raw.includes("red")) return "pill-coral";
-  if (raw.includes("amber") || raw.includes("warn")) return "pill-amber";
-  if (raw.includes("green") || raw.includes("teal")) return "pill-green";
+/** Map any status class/label to the three allowed status pills (or neutral gray). */
+function statusPillClass(raw: string, label = ""): string {
+  const text = `${raw} ${label}`.toLowerCase();
+  if (
+    text.includes("coral") ||
+    text.includes("red") ||
+    text.includes("correction") ||
+    text.includes("overdue") ||
+    text.includes("missing")
+  ) {
+    return "pill-coral";
+  }
+  if (
+    text.includes("amber") ||
+    text.includes("warn") ||
+    text.includes("requested") ||
+    text.includes("due soon") ||
+    text.includes("expir")
+  ) {
+    return "pill-amber";
+  }
+  if (
+    text.includes("green") ||
+    text.includes("teal") ||
+    text.includes("active") ||
+    text.includes("confirmed") ||
+    text.includes("done")
+  ) {
+    return "pill-green";
+  }
   return "pill-gray";
+}
+
+function trendColor(stat: DashboardData["stats"][number]): string {
+  const sub = stat.sub.toLowerCase();
+  if (
+    sub.includes("no session") ||
+    sub.includes("nothing urgent") ||
+    (sub.includes("no ") && sub.includes("scheduled"))
+  ) {
+    return "#9498A3";
+  }
+  if (stat.subColor.includes("coral") || sub.includes("overdue") || sub.includes("missing")) {
+    return "#E0524B";
+  }
+  if (stat.subColor.includes("amber") || sub.includes("need action")) {
+    return "#EF9F27";
+  }
+  if (stat.subColor.includes("teal") || stat.subColor.includes("green")) {
+    return "#1A9A6E";
+  }
+  return "#9498A3";
 }
 
 function caseBarColor(day: DashboardData["caseNoteDays"][number]): string {
@@ -38,6 +84,7 @@ export function DashboardView({ data }: { data: DashboardData }) {
       {showAdd && <AddClientModal onClose={() => setShowAdd(false)} />}
       <div className="stat-row">
         {data.stats.map((stat) => {
+          const trend = trendColor(stat);
           const inner = (
             <>
               <div className="stat-icon-row">
@@ -63,7 +110,7 @@ export function DashboardView({ data }: { data: DashboardData }) {
                   <span className="stat-val-suffix">/{data.todayExpected}</span>
                 )}
               </div>
-              <div className="stat-change" style={{ color: stat.subColor }}>
+              <div className="stat-change" style={{ color: trend }}>
                 {stat.sub}
               </div>
               <div className="mini-bar">
@@ -71,8 +118,7 @@ export function DashboardView({ data }: { data: DashboardData }) {
                   className="mini-fill"
                   style={{
                     width: `${stat.barPct}%`,
-                    background:
-                      stat.barColor.includes("blue") ? "var(--color-teal)" : stat.barColor,
+                    background: trend === "#9498A3" ? "#E6E8EC" : trend,
                   }}
                 />
               </div>
@@ -123,7 +169,9 @@ export function DashboardView({ data }: { data: DashboardData }) {
                     <div className="c-name">Client #{row.refCode}</div>
                     <div className="c-sub">{row.sub}</div>
                   </div>
-                  <span className={`pill ${statusPillClass(row.pillClass)}`}>{row.pillLabel}</span>
+                  <span className={`pill ${statusPillClass(row.pillClass, row.pillLabel)}`}>
+                    {row.pillLabel}
+                  </span>
                 </Link>
               ))
             )}
@@ -141,14 +189,7 @@ export function DashboardView({ data }: { data: DashboardData }) {
             <div className="empty-hint">No document alerts right now.</div>
           ) : (
             data.docAlerts.map((doc, i) => {
-              const pill =
-                doc.tone === "coral"
-                  ? "pill-coral"
-                  : doc.tone === "amber"
-                    ? "pill-amber"
-                    : doc.tone === "teal"
-                      ? "pill-green"
-                      : "pill-gray";
+              const pill = statusPillClass(doc.pillClass, doc.pillLabel);
               return (
                 <Link
                   key={`${doc.clientId}-${doc.docLabel}-${i}`}
@@ -158,9 +199,9 @@ export function DashboardView({ data }: { data: DashboardData }) {
                   <div className="doc-icon">
                     <i
                       className={
-                        doc.tone === "coral"
+                        pill === "pill-coral"
                           ? "ti ti-file-x"
-                          : doc.tone === "amber"
+                          : pill === "pill-amber"
                             ? "ti ti-clock"
                             : "ti ti-file"
                       }

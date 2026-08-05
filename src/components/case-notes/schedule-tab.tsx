@@ -109,12 +109,12 @@ export function ScheduleTab({ data }: { data: CaseNotesData }) {
         }}
       >
         <span style={{ display: "flex", alignItems: "center", gap: 5 }}>
-          <i className="ti ti-replace" style={{ fontSize: 12, color: "var(--color-amber)" }} />
-          Reassigned / covering a sick BT
+          <span className="pill pill-amber">Covering</span>
+          <span>Reassigned / covering a sick BT</span>
         </span>
         <span style={{ display: "flex", alignItems: "center", gap: 5 }}>
-          <i className="ti ti-alert-triangle" style={{ fontSize: 12, color: "var(--color-coral)" }} />
-          No BT assigned yet — needs action
+          <span className="pill pill-coral">Unassigned</span>
+          <span>No BT assigned yet — needs action</span>
         </span>
       </div>
 

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import type { CardView } from "@/lib/pipeline";
 import { QuickAddModal, AddClientModal } from "./modals";
 import { ClientDrawer } from "./client-drawer";
-import { tagStyle, dueColor } from "./tag-styles";
+import { tagStyle } from "./tag-styles";
 
 type Column = { key: string; title: string; dot: string; cards: CardView[] };
 
@@ -41,7 +41,7 @@ export function PipelineView({
             {needAction > 0 && (
               <>
                 {" · "}
-                <span style={{ color: "var(--color-coral)", fontWeight: 500 }}>{needAction} need action</span>
+                <span className="pill pill-coral">{needAction} need action</span>
               </>
             )}
           </div>
@@ -64,10 +64,9 @@ export function PipelineView({
         </div>
       </div>
 
-      {/* Compliance banner */}
-      <div style={{ margin: 16, padding: "11px 16px", background: "var(--color-teal-light)", border: "0.5px solid var(--color-teal)", borderRadius: 10, display: "flex", alignItems: "flex-start", gap: 10, flexShrink: 0 }}>
-        <i className="ti ti-shield-check" style={{ fontSize: 16, color: "var(--color-teal-dark)", flexShrink: 0, marginTop: 1 }} />
-        <div style={{ fontSize: 12, color: "var(--color-teal-dark)", lineHeight: 1.6 }}>
+      <div className="cn-info-banner" style={{ margin: 16, flexShrink: 0 }}>
+        <i className="ti ti-shield-check" aria-hidden="true" />
+        <div>
           <strong>HIPAA-conscious design:</strong> Clients are shown by reference code, not name.
           Full identity and case notes stay in Catalyst; all documents live in Google Drive.
         </div>
@@ -110,8 +109,11 @@ function KanbanCard({ card, onOpen }: { card: CardView; onOpen: () => void }) {
   return (
     <button className={`kb-card${card.alert ? " kb-card-alert" : ""}`} onClick={onOpen}>
       {card.alert && (
-        <div style={{ background: "var(--color-coral-light)", borderRadius: 6, padding: "5px 8px", marginBottom: 8, fontSize: 10, fontWeight: 500, color: "var(--color-coral-dark)", display: "flex", alignItems: "center", gap: 5 }}>
-          <i className="ti ti-alert-triangle" style={{ fontSize: 11 }} /> {card.alert}
+        <div style={{ marginBottom: 8 }}>
+          <span className="pill pill-coral">
+            <i className="ti ti-alert-triangle" style={{ fontSize: 11 }} aria-hidden="true" />
+            {card.alert}
+          </span>
         </div>
       )}
       <div className="kb-card-top">
@@ -132,9 +134,21 @@ function KanbanCard({ card, onOpen }: { card: CardView; onOpen: () => void }) {
       </div>
       {card.due && (
         <div className="kb-due-row">
-          <i className="ti ti-calendar" style={{ fontSize: 11, color: dueColor(card.due.tone) }} />
+          <i className="ti ti-calendar" style={{ fontSize: 11, color: "var(--color-ink3)" }} />
           <span className="kb-due-label">{card.due.label}</span>
-          <span className="kb-due-date" style={{ color: dueColor(card.due.tone) }}>{card.due.date}</span>
+          <span
+            className={`pill ${
+              card.due.tone === "coral"
+                ? "pill-coral"
+                : card.due.tone === "amber"
+                  ? "pill-amber"
+                  : card.due.tone === "teal"
+                    ? "pill-green"
+                    : "pill-gray"
+            }`}
+          >
+            {card.due.date}
+          </span>
         </div>
       )}
       <div className="kb-progress-wrap">
@@ -185,8 +199,24 @@ function ListView({
                 <td style={{ padding: "10px 14px" }}>
                   <span className="kb-tag" style={tagStyle(card.tags[0]?.tone ?? "gray")}>{card.tags[0]?.label}</span>
                 </td>
-                <td style={{ padding: "10px 14px", color: card.due ? dueColor(card.due.tone) : "var(--color-ink3)" }}>
-                  {card.due ? `${card.due.label} · ${card.due.date}` : "—"}
+                <td style={{ padding: "10px 14px" }}>
+                  {card.due ? (
+                    <span
+                      className={`pill ${
+                        card.due.tone === "coral"
+                          ? "pill-coral"
+                          : card.due.tone === "amber"
+                            ? "pill-amber"
+                            : card.due.tone === "teal"
+                              ? "pill-green"
+                              : "pill-gray"
+                      }`}
+                    >
+                      {card.due.label} · {card.due.date}
+                    </span>
+                  ) : (
+                    <span className="pill pill-gray">—</span>
+                  )}
                 </td>
                 <td style={{ padding: "10px 14px" }}>
                   {card.alert ? (

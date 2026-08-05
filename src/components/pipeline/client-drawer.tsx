@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import type { CardView } from "@/lib/pipeline";
 import { advanceStage, setCorrections } from "@/app/(app)/pipeline/actions";
-import { tagStyle, dueColor } from "./tag-styles";
+import { tagStyle } from "./tag-styles";
 
 const STRIP = ["Referral", "Phone screen", "Docs", "CMDE", "ITP", "Agreements", "Active"];
 
@@ -99,9 +99,21 @@ export function ClientDrawer({ card, onClose }: { card: CardView; onClose: () =>
           {card.due && (
             <div style={{ background: "var(--color-app)", borderRadius: 10, padding: "10px 12px" }}>
               <div className="kb-due-row" style={{ marginBottom: 6 }}>
-                <i className="ti ti-clock" style={{ fontSize: 12, color: dueColor(card.due.tone) }} />
+                <i className="ti ti-clock" style={{ fontSize: 12, color: "var(--color-ink3)" }} />
                 <span className="kb-due-label">{card.due.label}</span>
-                <span className="kb-due-date" style={{ color: dueColor(card.due.tone) }}>{card.due.date}</span>
+                <span
+                  className={`pill ${
+                    card.due.tone === "coral"
+                      ? "pill-coral"
+                      : card.due.tone === "amber"
+                        ? "pill-amber"
+                        : card.due.tone === "teal"
+                          ? "pill-green"
+                          : "pill-gray"
+                  }`}
+                >
+                  {card.due.date}
+                </span>
               </div>
               <div className="kb-progress-wrap">
                 <div className="kb-progress-bar" style={{ width: `${card.progressPct}%`, background: card.progressColor }} />
@@ -112,10 +124,10 @@ export function ClientDrawer({ card, onClose }: { card: CardView; onClose: () =>
           <div style={{ fontSize: 12, color: "var(--color-ink2)" }}>{card.footer}</div>
 
           {card.alert && (
-            <div style={{ background: "var(--color-coral-light)", borderRadius: 8, padding: "9px 12px", fontSize: 12, color: "var(--color-coral-dark)", display: "flex", alignItems: "center", gap: 6 }}>
-              <i className="ti ti-alert-triangle" style={{ fontSize: 13 }} />
+            <span className="pill pill-coral">
+              <i className="ti ti-alert-triangle" style={{ fontSize: 12 }} aria-hidden="true" />
               {card.alert}
-            </div>
+            </span>
           )}
 
           {/* External links */}

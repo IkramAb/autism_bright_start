@@ -215,13 +215,18 @@ export function StaffDetailPanel({
                         disabled={item.locked || item.blocked || pending}
                         onChange={(e) => toggleItem(item.id, e.target.checked)}
                       />
-                      <span style={{ flex: 1, fontStyle: item.locked ? "italic" : undefined, color: item.locked ? "var(--color-coral-dark)" : undefined }}>
+                      <span style={{ flex: 1, fontStyle: item.locked ? "italic" : undefined }}>
                         {item.label}
                       </span>
                       {item.due_on && !item.done && !item.locked && (
-                        <span style={{ fontSize: 10, color: "var(--color-amber)" }}>{fmtDate(item.due_on)}</span>
+                        <span className="pill pill-amber">{fmtDate(item.due_on)}</span>
                       )}
-                      {item.locked && <i className="ti ti-lock" style={{ fontSize: 12, color: "var(--color-coral-dark)" }} />}
+                      {item.locked && (
+                        <span className="pill pill-coral">
+                          <i className="ti ti-lock" style={{ fontSize: 11 }} aria-hidden="true" />
+                          Locked
+                        </span>
+                      )}
                     </label>
                   ))}
                 </div>

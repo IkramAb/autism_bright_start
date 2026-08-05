@@ -50,8 +50,8 @@ export function OnboardingView({ cards }: { cards: OnboardingCard[] }) {
             <span className={`pill ${card.statusClass}`} style={{ fontSize: 10 }}>{card.statusLabel}</span>
           </div>
           {card.alert && (
-            <div style={{ fontSize: 11, color: "var(--color-coral-dark)", background: "var(--color-coral-light)", padding: "6px 10px", borderRadius: 6, marginBottom: 8 }}>
-              {card.alert}
+            <div style={{ marginBottom: 8 }}>
+              <span className="pill pill-coral">{card.alert}</span>
             </div>
           )}
           <div className="mini-bar" style={{ marginBottom: 8 }}>
