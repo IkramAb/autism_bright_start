@@ -64,7 +64,7 @@ export function ClientDrawer({ card, onClose }: { card: CardView; onClose: () =>
 
         <div style={{ padding: 20, display: "flex", flexDirection: "column", gap: 18 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <span className="pill pill-blue" style={{ fontSize: 11 }}>{card.stageLabel}</span>
+            <span className="pill pill-gray" style={{ fontSize: 11 }}>{card.stageLabel}</span>
             {card.correctionsRequested && (
               <span className="pill pill-coral" style={{ fontSize: 11 }}>Corrections requested</span>
             )}

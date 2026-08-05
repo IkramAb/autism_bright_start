@@ -10,16 +10,10 @@ function matchRoute(pathname: string) {
   return key ? ROUTE_META[key] : { title: "ABA Connect", action: "Add client" };
 }
 
-function greeting(name: string) {
-  const h = new Date().getHours();
-  const part = h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening";
-  return `${part}, ${name.split(" ")[0]}`;
-}
-
 export function Topbar({ adminName }: { adminName: string }) {
+  void adminName;
   const pathname = usePathname();
   const meta = matchRoute(pathname);
-  const isDashboard = pathname === "/dashboard";
 
   const dateLabel = new Date().toLocaleDateString("en-US", {
     weekday: "long",
@@ -30,7 +24,7 @@ export function Topbar({ adminName }: { adminName: string }) {
   return (
     <div className="topbar">
       <span className="topbar-title">
-        {isDashboard ? greeting(adminName) : meta.title}
+        {meta.title}
         <span className="topbar-sub">{dateLabel}</span>
       </span>
 

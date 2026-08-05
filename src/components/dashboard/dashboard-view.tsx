@@ -5,6 +5,23 @@ import Link from "next/link";
 import type { DashboardData } from "@/lib/dashboard";
 import { AddClientModal } from "@/components/pipeline/modals";
 
+/** Map any status class to the three allowed status pills (or neutral gray). */
+function statusPillClass(raw: string): string {
+  if (raw.includes("coral") || raw.includes("red")) return "pill-coral";
+  if (raw.includes("amber") || raw.includes("warn")) return "pill-amber";
+  if (raw.includes("green") || raw.includes("teal")) return "pill-green";
+  return "pill-gray";
+}
+
+function caseBarColor(day: DashboardData["caseNoteDays"][number]): string {
+  // Future / unscheduled
+  if (day.countLabel === "—" || day.expected === 0) return "#E6E8EC";
+  // Complete
+  if (day.confirmed >= day.expected) return "#1A9A6E";
+  // Missing notes
+  return "#E0524B";
+}
+
 export function DashboardView({ data }: { data: DashboardData }) {
   const [showAdd, setShowAdd] = useState(false);
 
@@ -24,10 +41,7 @@ export function DashboardView({ data }: { data: DashboardData }) {
           const inner = (
             <>
               <div className="stat-icon-row">
-                <div
-                  className="stat-icon"
-                  style={{ background: "var(--color-blue-light)", color: "var(--color-blue-dark)" }}
-                >
+                <div className="stat-icon">
                   <i
                     className={
                       stat.label === "Active clients"
@@ -46,16 +60,21 @@ export function DashboardView({ data }: { data: DashboardData }) {
               <div className="stat-val">
                 {stat.value}
                 {stat.label === "Case notes today" && data.todayExpected > 0 && (
-                  <span style={{ fontSize: 13, color: "var(--color-ink3)", fontWeight: 400 }}>
-                    /{data.todayExpected}
-                  </span>
+                  <span className="stat-val-suffix">/{data.todayExpected}</span>
                 )}
               </div>
               <div className="stat-change" style={{ color: stat.subColor }}>
                 {stat.sub}
               </div>
               <div className="mini-bar">
-                <div className="mini-fill" style={{ width: `${stat.barPct}%`, background: stat.barColor }} />
+                <div
+                  className="mini-fill"
+                  style={{
+                    width: `${stat.barPct}%`,
+                    background:
+                      stat.barColor.includes("blue") ? "var(--color-teal)" : stat.barColor,
+                  }}
+                />
               </div>
             </>
           );
@@ -78,10 +97,7 @@ export function DashboardView({ data }: { data: DashboardData }) {
       <div className="grid-2">
         <div className="card">
           <div className="card-hd">
-            <span className="card-title">
-              <i className="ti ti-git-merge" style={{ color: "var(--color-blue)" }} aria-hidden="true" />
-              Onboarding pipeline
-            </span>
+            <span className="card-title">Onboarding pipeline</span>
             <Link href="/pipeline" className="view-link">
               View all →
             </Link>
@@ -94,23 +110,20 @@ export function DashboardView({ data }: { data: DashboardData }) {
               </Link>
             ))}
           </div>
-          <div style={{ marginTop: 12, borderTop: "0.5px solid var(--color-line)", paddingTop: 10 }}>
+          <div className="pipe-clients">
             {data.pipelineHighlights.length === 0 ? (
-              <div style={{ fontSize: 12, color: "var(--color-ink3)" }}>No clients in onboarding.</div>
+              <div className="empty-hint">No clients in onboarding.</div>
             ) : (
               data.pipelineHighlights.map((row) => (
                 <Link key={row.clientId} href={`/clients/${row.clientId}`} className="client-row">
-                  <div
-                    className="init"
-                    style={{ background: "var(--color-app)", color: "var(--color-ink2)" }}
-                  >
+                  <div className="client-row-icon">
                     <i className="ti ti-user" style={{ fontSize: 12 }} aria-hidden="true" />
                   </div>
-                  <div style={{ flex: 1 }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
                     <div className="c-name">Client #{row.refCode}</div>
                     <div className="c-sub">{row.sub}</div>
                   </div>
-                  <span className={`pill ${row.pillClass}`}>{row.pillLabel}</span>
+                  <span className={`pill ${statusPillClass(row.pillClass)}`}>{row.pillLabel}</span>
                 </Link>
               ))
             )}
@@ -119,60 +132,49 @@ export function DashboardView({ data }: { data: DashboardData }) {
 
         <div className="card">
           <div className="card-hd">
-            <span className="card-title">
-              <i className="ti ti-alert-circle" style={{ color: "var(--color-blue)" }} aria-hidden="true" />
-              Document alerts
-            </span>
+            <span className="card-title">Document alerts</span>
             <Link href="/documents" className="view-link">
               View all →
             </Link>
           </div>
           {data.docAlerts.length === 0 ? (
-            <div style={{ fontSize: 12, color: "var(--color-ink3)" }}>No document alerts right now.</div>
+            <div className="empty-hint">No document alerts right now.</div>
           ) : (
-            data.docAlerts.map((doc, i) => (
-              <Link
-                key={`${doc.clientId}-${doc.docLabel}-${i}`}
-                href="/documents"
-                className="doc-item"
-                style={
-                  doc.tone === "coral"
-                    ? { background: "var(--color-coral-light)", borderColor: "#F0B3AF" }
-                    : doc.tone === "amber"
-                      ? { background: "var(--color-amber-light)", borderColor: "#F0CE94" }
-                      : undefined
-                }
-              >
-                <div
-                  className="doc-icon"
-                  style={
-                    doc.tone === "coral"
-                      ? { background: "var(--color-coral)", color: "#fff" }
-                      : doc.tone === "amber"
-                        ? { background: "var(--color-amber)", color: "#fff" }
-                        : { background: "var(--color-teal-light)", color: "var(--color-teal-dark)" }
-                  }
+            data.docAlerts.map((doc, i) => {
+              const pill =
+                doc.tone === "coral"
+                  ? "pill-coral"
+                  : doc.tone === "amber"
+                    ? "pill-amber"
+                    : doc.tone === "teal"
+                      ? "pill-green"
+                      : "pill-gray";
+              return (
+                <Link
+                  key={`${doc.clientId}-${doc.docLabel}-${i}`}
+                  href="/documents"
+                  className="doc-item"
                 >
-                  <i
-                    className={
-                      doc.tone === "coral"
-                        ? "ti ti-file-x"
-                        : doc.tone === "amber"
-                          ? "ti ti-clock"
-                          : "ti ti-file-check"
-                    }
-                    aria-hidden="true"
-                  />
-                </div>
-                <div style={{ flex: 1 }}>
-                  <div className="doc-name">{doc.docLabel}</div>
-                  <div className="doc-meta" style={doc.metaColor ? { color: doc.metaColor } : undefined}>
-                    {doc.meta}
+                  <div className="doc-icon">
+                    <i
+                      className={
+                        doc.tone === "coral"
+                          ? "ti ti-file-x"
+                          : doc.tone === "amber"
+                            ? "ti ti-clock"
+                            : "ti ti-file"
+                      }
+                      aria-hidden="true"
+                    />
                   </div>
-                </div>
-                <span className={`pill ${doc.pillClass}`}>{doc.pillLabel}</span>
-              </Link>
-            ))
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div className="doc-name">{doc.docLabel}</div>
+                    <div className="doc-meta">{doc.meta}</div>
+                  </div>
+                  <span className={`pill ${pill}`}>{doc.pillLabel}</span>
+                </Link>
+              );
+            })
           )}
         </div>
       </div>
@@ -180,30 +182,18 @@ export function DashboardView({ data }: { data: DashboardData }) {
       <div className="grid-2">
         <div className="card">
           <div className="card-hd">
-            <span className="card-title">
-              <i className="ti ti-checklist" style={{ color: "var(--color-blue)" }} aria-hidden="true" />
-              Staff onboarding
-            </span>
+            <span className="card-title">Staff onboarding</span>
             <Link href="/onboarding" className="view-link">
               View all →
             </Link>
           </div>
           {data.staffOnboarding ? (
             <>
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  marginBottom: 6,
-                }}
-              >
-                <span style={{ fontSize: 12, fontWeight: 500 }}>
+              <div className="staff-onb-hd">
+                <span className="staff-onb-name">
                   {data.staffOnboarding.fullName} — {data.staffOnboarding.role}
                 </span>
-                <span style={{ fontSize: 11, color: "var(--color-teal)", fontWeight: 600 }}>
-                  {data.staffOnboarding.progressPct}%
-                </span>
+                <span className="staff-onb-pct">{data.staffOnboarding.progressPct}%</span>
               </div>
               <div className="progress-wrap" style={{ marginBottom: 12 }}>
                 <div
@@ -221,7 +211,15 @@ export function DashboardView({ data }: { data: DashboardData }) {
                   </div>
                   <span className={`check-text${item.done ? " done" : ""}`}>{item.label}</span>
                   {item.due && !item.done && (
-                    <span className="check-due" style={{ color: item.dueTone, fontWeight: 600 }}>
+                    <span
+                      className={`pill ${
+                        item.dueTone?.includes("coral")
+                          ? "pill-coral"
+                          : item.dueTone?.includes("amber")
+                            ? "pill-amber"
+                            : "pill-gray"
+                      }`}
+                    >
                       {item.due}
                     </span>
                   )}
@@ -229,46 +227,49 @@ export function DashboardView({ data }: { data: DashboardData }) {
               ))}
             </>
           ) : (
-            <div style={{ fontSize: 12, color: "var(--color-ink3)" }}>No staff currently onboarding.</div>
+            <div className="empty-hint">No staff currently onboarding.</div>
           )}
         </div>
 
         <div className="card">
           <div className="card-hd">
-            <span className="card-title">
-              <i className="ti ti-writing" style={{ color: "var(--color-blue)" }} aria-hidden="true" />
-              Case notes — this week
-            </span>
+            <span className="card-title">Case notes — this week</span>
             <Link href="/case-notes" className="view-link">
               View all →
             </Link>
           </div>
-          {data.caseNoteDays.map((day) => (
-            <div key={day.name} className="case-day">
-              <span className="case-day-name">{day.name}</span>
-              <div className="case-bar-wrap">
-                <div
-                  className="case-bar"
-                  style={{ width: `${day.barPct}%`, background: day.barColor }}
-                />
+          {data.caseNoteDays.map((day) => {
+            const fill = caseBarColor(day);
+            const isIdle = day.countLabel === "—" || day.expected === 0;
+            return (
+              <div key={day.name} className="case-day">
+                <span className="case-day-name">{day.name}</span>
+                <div className="case-bar-wrap">
+                  <div
+                    className="case-bar"
+                    style={{
+                      width: isIdle ? "0%" : `${Math.max(day.barPct, 8)}%`,
+                      background: fill,
+                    }}
+                  />
+                </div>
+                <span
+                  className="case-count"
+                  style={{
+                    color: isIdle
+                      ? "var(--color-ink3)"
+                      : fill === "#E0524B"
+                        ? "var(--color-coral)"
+                        : "var(--color-teal)",
+                  }}
+                >
+                  {day.countLabel}
+                </span>
               </div>
-              <span className="case-count" style={{ color: day.countColor }}>
-                {day.countLabel}
-              </span>
-            </div>
-          ))}
+            );
+          })}
           {data.missingCaseNoteSummary && (
-            <div
-              style={{
-                marginTop: 8,
-                padding: "8px 10px",
-                borderRadius: 8,
-                background: "var(--color-coral-light)",
-                border: "0.5px solid #F0B3AF",
-                fontSize: 11,
-                color: "var(--color-coral-dark)",
-              }}
-            >
+            <div className="case-missing-banner">
               <i className="ti ti-alert-triangle" style={{ fontSize: 12, marginRight: 4 }} aria-hidden="true" />
               {data.missingCaseNoteSummary}
             </div>

@@ -9,10 +9,10 @@ export function tagStyle(tone: TagTone): React.CSSProperties {
       return { background: "var(--color-amber-light)", color: "var(--color-amber-dark)" };
     case "coral":
       return { background: "var(--color-coral-light)", color: "var(--color-coral-dark)" };
+    // Blue is brand, not status — collapse to neutral gray
     case "blue":
-      return { background: "var(--color-blue-light)", color: "var(--color-blue-dark)" };
     default:
-      return { background: "#f1efe8", color: "var(--color-ink2)" };
+      return { background: "#eef1f5", color: "#5c6270" };
   }
 }
 
