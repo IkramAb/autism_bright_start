@@ -46,6 +46,14 @@ export function Sidebar({
     }
   }, [collapsed, hydrated]);
 
+  useEffect(() => {
+    function onToggle() {
+      setCollapsed((v) => !v);
+    }
+    window.addEventListener("aba:toggle-sidebar", onToggle);
+    return () => window.removeEventListener("aba:toggle-sidebar", onToggle);
+  }, []);
+
   // Prefer a more visible logo; never go below 48px when expanded
   const displayHeight = Math.max(logoHeight, 48);
 
@@ -127,22 +135,24 @@ export function Sidebar({
 
       <div className="sidebar-foot">
         <div className={`user-row${collapsed ? " user-row-collapsed" : ""}`}>
-          <div className="avatar" title={collapsed ? `${adminName} · ${adminRole}` : undefined}>
+          <div
+            className="avatar avatar-lg"
+            title={collapsed ? `${adminName} · ${adminRole}` : undefined}
+          >
             {adminInitials}
           </div>
           {!collapsed && (
             <>
-              <div className="min-w-0 flex-1">
+              <div className="user-meta">
                 <div className="user-name truncate">{adminName}</div>
                 <div className="user-role truncate">{adminRole}</div>
               </div>
-              <form action={signOut}>
+              <form action={signOut} className="user-actions">
                 <button
                   type="submit"
                   title="Sign out"
                   aria-label="Sign out"
-                  className="icon-btn"
-                  style={{ width: 28, height: 28 }}
+                  className="user-menu-chevron"
                 >
                   <i className="ti ti-logout" aria-hidden="true" />
                 </button>
@@ -151,6 +161,15 @@ export function Sidebar({
           )}
         </div>
       </div>
+
+      <button
+        type="button"
+        className="sidebar-rail"
+        onClick={() => setCollapsed((v) => !v)}
+        title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+        aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+        tabIndex={-1}
+      />
     </aside>
   );
 }

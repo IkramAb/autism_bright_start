@@ -80,12 +80,27 @@ export function ClientsListView({ data }: { data: ClientListData }) {
         <table className="data-table">
           <thead>
             <tr>
-              <th>Client</th>
-              <th>Status</th>
+              <th>
+                <span className="th-sort">
+                  Client
+                  <i className="ti ti-selector" aria-hidden="true" />
+                </span>
+              </th>
+              <th>
+                <span className="th-sort">
+                  Status
+                  <i className="ti ti-selector" aria-hidden="true" />
+                </span>
+              </th>
               <th>MA</th>
               <th>Assigned BCBA/QSP</th>
               <th>Full record</th>
-              <th>Next renewal</th>
+              <th>
+                <span className="th-sort">
+                  Next renewal
+                  <i className="ti ti-selector" aria-hidden="true" />
+                </span>
+              </th>
               <th />
             </tr>
           </thead>
@@ -123,6 +138,33 @@ function FilterBtn({
   );
 }
 
+function pillIcon(className: string, label: string): string {
+  const text = `${className} ${label}`.toLowerCase();
+  if (
+    text.includes("pill-green") ||
+    text.includes("verified") ||
+    text.includes("active")
+  ) {
+    return "ti-circle-check";
+  }
+  if (
+    text.includes("pill-coral") ||
+    text.includes("none") ||
+    text.includes("inactive")
+  ) {
+    return "ti-circle-x";
+  }
+  if (
+    text.includes("pill-amber") ||
+    text.includes("pending") ||
+    text.includes("unverified") ||
+    text.includes("expir")
+  ) {
+    return "ti-clock";
+  }
+  return "ti-circle-dot";
+}
+
 function ClientRow({ row }: { row: ClientListRow }) {
   const renewalColor =
     row.nextRenewalTone === "coral"
@@ -149,12 +191,14 @@ function ClientRow({ row }: { row: ClientListRow }) {
         </Link>
       </td>
       <td>
-        <span className={`pill ${row.stagePillClass}`} style={{ fontSize: 10 }}>
+        <span className={`pill pill-icon ${row.stagePillClass}`} style={{ fontSize: 10 }}>
+          <i className={`ti ${pillIcon(row.stagePillClass, row.stageLabel)}`} aria-hidden="true" />
           {row.stageLabel}
         </span>
       </td>
       <td>
-        <span className={`pill ${row.maPillClass}`} style={{ fontSize: 10 }}>
+        <span className={`pill pill-icon ${row.maPillClass}`} style={{ fontSize: 10 }}>
+          <i className={`ti ${pillIcon(row.maPillClass, row.maLabel)}`} aria-hidden="true" />
           {row.maLabel}
         </span>
       </td>
