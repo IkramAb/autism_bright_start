@@ -26,9 +26,8 @@ import {
   updateRenewalRule,
   uploadOrganizationLogo,
   removeOrganizationLogo,
-  updateOrganizationLogoSize,
 } from "@/app/(app)/settings/actions";
-import { MIN_LOGO_HEIGHT, MAX_LOGO_HEIGHT } from "@/lib/branding";
+import { FIXED_LOGO_HEIGHT } from "@/lib/branding";
 
 type Tab =
   | "organization"
@@ -164,7 +163,6 @@ export function SettingsView({ data }: { data: SettingsData }) {
             onSaveProfile={(fd) => run(() => updateAdminProfile(fd))}
             onUploadLogo={(fd) => run(() => uploadOrganizationLogo(fd))}
             onRemoveLogo={() => run(() => removeOrganizationLogo())}
-            onSaveLogoSize={(size) => run(() => updateOrganizationLogoSize(size))}
           />
         )}
 
@@ -288,7 +286,6 @@ function OrganizationPanel({
   onSaveProfile,
   onUploadLogo,
   onRemoveLogo,
-  onSaveLogoSize,
 }: {
   data: SettingsData;
   pending: boolean;
@@ -296,7 +293,6 @@ function OrganizationPanel({
   onSaveProfile: (fd: FormData) => void;
   onUploadLogo: (fd: FormData) => void;
   onRemoveLogo: () => void;
-  onSaveLogoSize: (size: number) => void;
 }) {
   return (
     <div className="st-panel">
@@ -307,11 +303,9 @@ function OrganizationPanel({
       </div>
       <LogoUploader
         logoUrl={data.logoUrl}
-        logoHeight={data.logoHeight}
         pending={pending}
         onUpload={onUploadLogo}
         onRemove={onRemoveLogo}
-        onSaveSize={onSaveLogoSize}
       />
 
       <div className="st-section-title" style={{ marginTop: 24 }}>
@@ -926,27 +920,18 @@ function UsersPanel({ data, onInvite }: { data: SettingsData; onInvite: () => vo
 
 function LogoUploader({
   logoUrl,
-  logoHeight,
   pending,
   onUpload,
   onRemove,
-  onSaveSize,
 }: {
   logoUrl: string | null;
-  logoHeight: number;
   pending: boolean;
   onUpload: (fd: FormData) => void;
   onRemove: () => void;
-  onSaveSize: (size: number) => void;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
-  const [size, setSize] = useState(logoHeight);
-
-  useEffect(() => {
-    setSize(logoHeight);
-  }, [logoHeight]);
 
   function handleSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -970,11 +955,11 @@ function LogoUploader({
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          minHeight: MAX_LOGO_HEIGHT + 28,
+          minHeight: FIXED_LOGO_HEIGHT + 28,
           padding: 14,
           borderRadius: 10,
           background: "var(--color-sidebar, #f7f8fa)",
-          border: "1px solid var(--color-line, #e5e7eb)",
+          border: "1px solid var(--color-line)",
           marginBottom: 14,
         }}
       >
@@ -983,7 +968,12 @@ function LogoUploader({
           <img
             src={shownImage}
             alt="Practice logo preview"
-            style={{ height: size, maxHeight: size, maxWidth: "100%", objectFit: "contain" }}
+            style={{
+              height: FIXED_LOGO_HEIGHT,
+              maxHeight: FIXED_LOGO_HEIGHT,
+              maxWidth: "100%",
+              objectFit: "contain",
+            }}
           />
         ) : (
           <div style={{ display: "flex", alignItems: "center", gap: 10, color: "var(--color-ink3)" }}>
@@ -992,51 +982,6 @@ function LogoUploader({
           </div>
         )}
       </div>
-
-      {/* Size control */}
-      {(logoUrl || preview) && (
-        <div style={{ marginBottom: 16 }}>
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              marginBottom: 6,
-            }}
-          >
-            <label className="st-field-label" style={{ margin: 0 }}>
-              Display size
-            </label>
-            <span style={{ fontSize: 11, color: "var(--color-ink3)" }}>{size}px</span>
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <i className="ti ti-photo" style={{ fontSize: 13, color: "var(--color-ink3)" }} aria-hidden="true" />
-            <input
-              type="range"
-              min={MIN_LOGO_HEIGHT}
-              max={MAX_LOGO_HEIGHT}
-              value={size}
-              onChange={(e) => setSize(parseInt(e.target.value, 10))}
-              style={{ flex: 1 }}
-            />
-            <i className="ti ti-photo" style={{ fontSize: 22, color: "var(--color-ink3)" }} aria-hidden="true" />
-            <button
-              type="button"
-              className="btn btn-outline"
-              style={{ fontSize: 11, padding: "5px 12px" }}
-              disabled={pending || !logoUrl || size === logoHeight}
-              onClick={() => onSaveSize(size)}
-            >
-              Save size
-            </button>
-          </div>
-          {!logoUrl && preview && (
-            <div style={{ fontSize: 11, color: "var(--color-ink3)", marginTop: 6 }}>
-              Upload the logo first, then the size can be saved.
-            </div>
-          )}
-        </div>
-      )}
 
       {/* Upload controls */}
       <form

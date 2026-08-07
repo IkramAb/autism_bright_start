@@ -6,6 +6,7 @@ import { getCurrentAdmin } from "@/lib/auth";
 import {
   BRANDING_BUCKET,
   BRANDING_CONFIG_PATH,
+  FIXED_LOGO_HEIGHT,
   LOGO_ALLOWED_MIME_TYPES,
   LOGO_MAX_BYTES,
   LOGO_OBJECT_PATH,
@@ -139,6 +140,9 @@ export async function uploadOrganizationLogo(formData: FormData): Promise<Action
         error: `Upload failed: ${uploadError.message}. Make sure the branding storage bucket and policies exist (run supabase/migrations/20260722190000_branding_logo.sql).`,
       };
     }
+
+    // Keep stored size in sync with the fixed product display height.
+    await writeLogoHeightConfig(FIXED_LOGO_HEIGHT);
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : "Upload failed." };
   }
@@ -148,45 +152,44 @@ export async function uploadOrganizationLogo(formData: FormData): Promise<Action
   return { ok: true, message: "Logo updated." };
 }
 
-export async function updateOrganizationLogoSize(size: number): Promise<ActionResult> {
-  const { error } = await requireAdmin();
-  if (error) return { ok: false, error };
-
+async function writeLogoHeightConfig(size: number): Promise<string | null> {
   const logoHeight = clampLogoHeight(Number(size));
   const payload = new Uint8Array(
     new TextEncoder().encode(JSON.stringify({ logoHeight })),
   );
 
-  try {
-    const authed = await createClient();
-    let writeError = (
-      await authed.storage
-        .from(BRANDING_BUCKET)
-        .upload(BRANDING_CONFIG_PATH, payload, {
+  const authed = await createClient();
+  let writeError = (
+    await authed.storage.from(BRANDING_BUCKET).upload(BRANDING_CONFIG_PATH, payload, {
+      contentType: "application/json",
+      upsert: true,
+    })
+  ).error;
+
+  if (writeError) {
+    const admin = tryCreateAdminClient();
+    if (admin) {
+      await ensureBrandingBucket();
+      writeError = (
+        await admin.storage.from(BRANDING_BUCKET).upload(BRANDING_CONFIG_PATH, payload, {
           contentType: "application/json",
           upsert: true,
         })
-    ).error;
-
-    if (writeError) {
-      const admin = tryCreateAdminClient();
-      if (admin) {
-        await ensureBrandingBucket();
-        writeError = (
-          await admin.storage
-            .from(BRANDING_BUCKET)
-            .upload(BRANDING_CONFIG_PATH, payload, {
-              contentType: "application/json",
-              upsert: true,
-            })
-        ).error;
-      }
+      ).error;
     }
-
-    if (writeError) return { ok: false, error: writeError.message };
-  } catch (err) {
-    return { ok: false, error: err instanceof Error ? err.message : "Could not save size." };
   }
+
+  return writeError?.message ?? null;
+}
+
+export async function updateOrganizationLogoSize(size: number): Promise<ActionResult> {
+  const { error } = await requireAdmin();
+  if (error) return { ok: false, error };
+
+  // Size is fixed in product UI; persist the fixed value (ignore arbitrary input).
+  void size;
+  const writeError = await writeLogoHeightConfig(FIXED_LOGO_HEIGHT);
+  if (writeError) return { ok: false, error: writeError };
 
   revalidatePath("/settings");
   revalidatePath("/", "layout");

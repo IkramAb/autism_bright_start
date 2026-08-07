@@ -85,19 +85,12 @@ export function DashboardView({ data }: { data: DashboardData }) {
       <div className="stat-row">
         {data.stats.map((stat) => {
           const trend = trendColor(stat);
-          const trendIcon =
-            trend === "#E0524B" || trend === "#EF9F27"
-              ? "ti-arrow-up-right"
-              : trend === "#1A9A6E"
-                ? "ti-trending-up"
-                : "ti-minus";
           const inner = (
             <>
               <div className="stat-card-hd">
                 <span className="stat-lbl">{stat.label}</span>
                 <span className="stat-badge" style={{ color: trend, borderColor: `${trend}44` }}>
-                  <i className={`ti ${trendIcon}`} aria-hidden="true" />
-                  <span className="stat-badge-text">{stat.sub}</span>
+                  {stat.sub}
                 </span>
               </div>
               <div className="stat-val">
@@ -108,15 +101,14 @@ export function DashboardView({ data }: { data: DashboardData }) {
               </div>
               <div className="stat-card-ft">
                 <div className="stat-change" style={{ color: trend }}>
-                  <span className="stat-change-text">{stat.sub}</span>
-                  <i className={`ti ${trendIcon}`} aria-hidden="true" />
+                  {stat.sub}
                 </div>
                 <div className="mini-bar">
                   <div
                     className="mini-fill"
                     style={{
                       width: `${stat.barPct}%`,
-                      background: trend === "#9498A3" ? "#E6E8EC" : trend,
+                      background: trend === "#9498A3" ? "var(--color-line)" : trend,
                     }}
                   />
                 </div>

@@ -21,7 +21,7 @@ export function Sidebar({
   adminRole,
   adminInitials,
   logoUrl,
-  logoHeight = 52,
+  logoHeight = 150,
 }: Props) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
@@ -54,8 +54,7 @@ export function Sidebar({
     return () => window.removeEventListener("aba:toggle-sidebar", onToggle);
   }, []);
 
-  // Prefer a more visible logo; never go below 48px when expanded
-  const displayHeight = Math.max(logoHeight, 48);
+  const displayHeight = logoHeight;
 
   return (
     <aside className={`sidebar${collapsed ? " sidebar-collapsed" : ""}`}>
@@ -70,7 +69,7 @@ export function Sidebar({
               style={
                 collapsed
                   ? { height: 28, maxHeight: 28, maxWidth: 36 }
-                  : { height: displayHeight, maxHeight: displayHeight }
+                  : { height: displayHeight, maxHeight: displayHeight, maxWidth: "100%" }
               }
             />
           ) : (
