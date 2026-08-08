@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import type { CaseNotesData } from "@/lib/case-notes-shared";
 import { sendWeeklyReport } from "@/app/(app)/case-notes/actions";
@@ -29,14 +29,6 @@ export function CaseNotesView({ data }: { data: CaseNotesData }) {
       await sendWeeklyReport(data.week.id);
     });
   }
-
-  useEffect(() => {
-    function onPrimary() {
-      handleSendReport();
-    }
-    window.addEventListener("aba:primary-action", onPrimary as EventListener);
-    return () => window.removeEventListener("aba:primary-action", onPrimary as EventListener);
-  });
 
   return (
     <div className="page-full">

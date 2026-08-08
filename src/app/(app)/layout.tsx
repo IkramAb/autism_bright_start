@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getCurrentAdmin } from "@/lib/auth";
 import { getBranding } from "@/lib/branding";
+import { getTopbarAlerts } from "@/lib/topbar";
 import { Sidebar } from "@/components/shell/sidebar";
 import { Topbar } from "@/components/shell/topbar";
 
@@ -14,7 +15,10 @@ export default async function AppLayout({
   const admin = await getCurrentAdmin();
   if (!admin) redirect("/login");
 
-  const { logoUrl, logoHeight } = await getBranding();
+  const [{ logoUrl, logoHeight }, alerts] = await Promise.all([
+    getBranding(),
+    getTopbarAlerts(),
+  ]);
 
   return (
     <div className="app-shell">
@@ -26,7 +30,7 @@ export default async function AppLayout({
         logoHeight={logoHeight}
       />
       <div className="main">
-        <Topbar adminName={admin.fullName} />
+        <Topbar adminName={admin.fullName} alerts={alerts} />
         <div className="content">{children}</div>
       </div>
     </div>

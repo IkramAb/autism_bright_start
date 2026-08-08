@@ -31,14 +31,6 @@ export function StaffDirectoryView({ rows }: { rows: StaffListRow[] }) {
   const [pending, startTransition] = useTransition();
   const [busyId, setBusyId] = useState<string | null>(null);
 
-  useEffect(() => {
-    function onPrimary() {
-      setShowAdd(true);
-    }
-    window.addEventListener("aba:primary-action", onPrimary as EventListener);
-    return () => window.removeEventListener("aba:primary-action", onPrimary as EventListener);
-  }, []);
-
   const filtered = useMemo(() => {
     let list = rows;
     if (filter === "rbt") list = list.filter((r) => r.roleType === "rbt");
@@ -128,15 +120,20 @@ export function StaffDirectoryView({ rows }: { rows: StaffListRow[] }) {
         title={meta.title}
         subtitle={`${rows.length} staff members · ${meta.subtitle}`}
         actions={
-          <div className="search">
-            <i className="ti ti-search" aria-hidden="true" />
-            <input
-              placeholder="Search by name…"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              aria-label="Search staff by name"
-            />
-          </div>
+          <>
+            <div className="search">
+              <i className="ti ti-search" aria-hidden="true" />
+              <input
+                placeholder="Search by name…"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                aria-label="Search staff by name"
+              />
+            </div>
+            <button type="button" className="btn btn-primary" onClick={() => setShowAdd(true)}>
+              <i className="ti ti-plus" style={{ fontSize: 13 }} aria-hidden="true" /> Add employee
+            </button>
+          </>
         }
       />
 

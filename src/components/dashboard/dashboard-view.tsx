@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import type { DashboardData } from "@/lib/dashboard";
 import { AddClientModal } from "@/components/pipeline/modals";
@@ -72,21 +72,20 @@ function caseBarColor(day: DashboardData["caseNoteDays"][number]): string {
 
 export function DashboardView({ data }: { data: DashboardData }) {
   const [showAdd, setShowAdd] = useState(false);
-
-  useEffect(() => {
-    function onPrimary() {
-      setShowAdd(true);
-    }
-    window.addEventListener("aba:primary-action", onPrimary as EventListener);
-    return () => window.removeEventListener("aba:primary-action", onPrimary as EventListener);
-  }, []);
-
   const meta = ROUTE_META["/dashboard"];
 
   return (
     <div className="page-stack">
       {showAdd && <AddClientModal onClose={() => setShowAdd(false)} />}
-      <PageHeader title={meta.title} subtitle={meta.subtitle} />
+      <PageHeader
+        title={meta.title}
+        subtitle={meta.subtitle}
+        actions={
+          <button type="button" className="btn btn-primary" onClick={() => setShowAdd(true)}>
+            <i className="ti ti-plus" style={{ fontSize: 13 }} aria-hidden="true" /> Add client
+          </button>
+        }
+      />
       <div className="stat-row">
         {data.stats.map((stat) => {
           const trend = trendColor(stat);

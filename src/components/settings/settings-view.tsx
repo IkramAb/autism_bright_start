@@ -93,15 +93,6 @@ export function SettingsView({ data }: { data: SettingsData }) {
     }
   }, [searchParams]);
 
-  useEffect(() => {
-    function onPrimary() {
-      setTab("users");
-      setInviteOpen(true);
-    }
-    window.addEventListener("aba:primary-action", onPrimary as EventListener);
-    return () => window.removeEventListener("aba:primary-action", onPrimary as EventListener);
-  }, []);
-
   function notify(message: string) {
     setToast(message);
     setTimeout(() => setToast(null), 3200);

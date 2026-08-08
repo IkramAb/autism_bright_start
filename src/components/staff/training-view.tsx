@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import type { TrainingFlatRow } from "@/lib/staff";
 import { updateTraining } from "@/app/(app)/staff/actions";
@@ -16,14 +16,6 @@ export function TrainingView({ rows }: { rows: TrainingFlatRow[] }) {
   const [filter, setFilter] = useState<Filter>("all");
   const [showUpload, setShowUpload] = useState(false);
   const [pending, startTransition] = useTransition();
-
-  useEffect(() => {
-    function onPrimary() {
-      setShowUpload(true);
-    }
-    window.addEventListener("aba:primary-action", onPrimary as EventListener);
-    return () => window.removeEventListener("aba:primary-action", onPrimary as EventListener);
-  }, []);
 
   const filtered = useMemo(() => {
     if (filter === "all") return rows;
@@ -49,7 +41,15 @@ export function TrainingView({ rows }: { rows: TrainingFlatRow[] }) {
   return (
     <div>
       {showUpload && <UploadCertModal rows={rows} onClose={() => setShowUpload(false)} />}
-      <PageHeader title={meta.title} subtitle={meta.subtitle} />
+      <PageHeader
+        title={meta.title}
+        subtitle={meta.subtitle}
+        actions={
+          <button type="button" className="btn btn-primary" onClick={() => setShowUpload(true)}>
+            <i className="ti ti-upload" style={{ fontSize: 13 }} aria-hidden="true" /> Upload cert
+          </button>
+        }
+      />
 
       <div className="filter-tab-row">
         {(["all", "overdue", "pending", "complete"] as const).map((f) => (

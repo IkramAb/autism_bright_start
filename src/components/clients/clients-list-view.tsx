@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import type { ClientListData, ClientListRow } from "@/lib/clients";
 import { CATALYST_URL } from "@/lib/documents";
@@ -19,14 +19,6 @@ export function ClientsListView({ data }: { data: ClientListData }) {
   const [sortKey, setSortKey] = useState<SortKey>("client");
   const [sortDir, setSortDir] = useState<SortDir>("asc");
   const [showAdd, setShowAdd] = useState(false);
-
-  useEffect(() => {
-    function onPrimary() {
-      setShowAdd(true);
-    }
-    window.addEventListener("aba:primary-action", onPrimary as EventListener);
-    return () => window.removeEventListener("aba:primary-action", onPrimary as EventListener);
-  }, []);
 
   const rows = useMemo(() => {
     let list = data.rows;
@@ -83,15 +75,20 @@ export function ClientsListView({ data }: { data: ClientListData }) {
         title={meta.title}
         subtitle={`${counts.all} total · ${counts.active} active · ${counts.onboarding} in onboarding`}
         actions={
-          <div className="search">
-            <i className="ti ti-search" aria-hidden="true" />
-            <input
-              placeholder="Search by client code…"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              aria-label="Search clients by code"
-            />
-          </div>
+          <>
+            <div className="search">
+              <i className="ti ti-search" aria-hidden="true" />
+              <input
+                placeholder="Search by client code…"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                aria-label="Search clients by code"
+              />
+            </div>
+            <button type="button" className="btn btn-primary" onClick={() => setShowAdd(true)}>
+              <i className="ti ti-plus" style={{ fontSize: 13 }} aria-hidden="true" /> Add client
+            </button>
+          </>
         }
       />
 

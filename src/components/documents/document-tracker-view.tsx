@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import type { DocTrackerData } from "@/lib/clients";
 import type { DocFilterCategory } from "@/lib/documents";
@@ -20,14 +20,6 @@ export function DocumentTrackerView({ data }: { data: DocTrackerData }) {
     return initial;
   });
   const [showUpload, setShowUpload] = useState(false);
-
-  useEffect(() => {
-    function onPrimary() {
-      setShowUpload(true);
-    }
-    window.addEventListener("aba:primary-action", onPrimary as EventListener);
-    return () => window.removeEventListener("aba:primary-action", onPrimary as EventListener);
-  }, []);
 
   const clients = useMemo(() => {
     if (filter === "all") return data.clients;
@@ -55,7 +47,15 @@ export function DocumentTrackerView({ data }: { data: DocTrackerData }) {
   return (
     <div>
       {showUpload && <UploadDocModal data={data} onClose={() => setShowUpload(false)} />}
-      <PageHeader title={meta.title} subtitle={meta.subtitle} />
+      <PageHeader
+        title={meta.title}
+        subtitle={meta.subtitle}
+        actions={
+          <button type="button" className="btn btn-primary" onClick={() => setShowUpload(true)}>
+            <i className="ti ti-upload" style={{ fontSize: 13 }} aria-hidden="true" /> Upload doc
+          </button>
+        }
+      />
 
       <div className="filter-tab-row">
         <FilterTab active={filter === "all"} onClick={() => setFilter("all")}>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import type { CardView } from "@/lib/pipeline";
 import { QuickAddModal, AddClientModal } from "./modals";
 import { ClientDrawer } from "./client-drawer";
@@ -23,15 +23,6 @@ export function PipelineView({
   const [selected, setSelected] = useState<CardView | null>(null);
   const [modal, setModal] = useState<null | "quick" | "add">(null);
   const meta = ROUTE_META["/pipeline"];
-
-  useEffect(() => {
-    function onPrimary() {
-      setModal("add");
-    }
-    window.addEventListener("aba:primary-action", onPrimary as EventListener);
-    return () =>
-      window.removeEventListener("aba:primary-action", onPrimary as EventListener);
-  }, []);
 
   const allCards = columns.flatMap((c) => c.cards.map((card) => ({ card, col: c })));
 

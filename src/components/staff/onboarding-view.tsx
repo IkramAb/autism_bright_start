@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import type { OnboardingCard } from "@/lib/staff";
 import { fetchStaffDetail } from "@/app/(app)/staff/actions";
 import { StaffDetailPanel } from "./staff-detail-panel";
@@ -14,14 +14,6 @@ export function OnboardingView({ cards }: { cards: OnboardingCard[] }) {
   const [detail, setDetail] = useState<StaffDetail | null>(null);
   const [showAdd, setShowAdd] = useState(false);
   const [, startTransition] = useTransition();
-
-  useEffect(() => {
-    function onPrimary() {
-      setShowAdd(true);
-    }
-    window.addEventListener("aba:primary-action", onPrimary as EventListener);
-    return () => window.removeEventListener("aba:primary-action", onPrimary as EventListener);
-  }, []);
 
   function openDetail(id: string) {
     startTransition(async () => {
@@ -39,6 +31,11 @@ export function OnboardingView({ cards }: { cards: OnboardingCard[] }) {
       <PageHeader
         title={meta.title}
         subtitle={`${cards.length} employees in onboarding · ${meta.subtitle}`}
+        actions={
+          <button type="button" className="btn btn-primary" onClick={() => setShowAdd(true)}>
+            <i className="ti ti-plus" style={{ fontSize: 13 }} aria-hidden="true" /> Add employee
+          </button>
+        }
       />
 
       <div className="page-stack">
