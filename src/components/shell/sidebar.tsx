@@ -60,45 +60,37 @@ export function Sidebar({
     <aside className={`sidebar${collapsed ? " sidebar-collapsed" : ""}`}>
       <div className="sidebar-logo">
         <div className="sidebar-logo-main">
-          {logoUrl ? (
+          {collapsed ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src="/branding/logo-bulb.png"
+              alt="Practice logo"
+              className="brand-logo brand-logo-bulb"
+            />
+          ) : logoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={logoUrl}
               alt="Practice logo"
               className="brand-logo"
-              style={
-                collapsed
-                  ? { height: 28, maxHeight: 28, maxWidth: 36 }
-                  : { height: displayHeight, maxHeight: displayHeight, maxWidth: "100%" }
-              }
+              style={{
+                height: displayHeight,
+                maxHeight: displayHeight,
+                maxWidth: "100%",
+              }}
             />
           ) : (
-            <div className={`sidebar-brand-fallback${collapsed ? " is-collapsed" : ""}`}>
+            <div className="sidebar-brand-fallback">
               <div className="logo-icon">
                 <i className="ti ti-puzzle" aria-hidden="true" />
               </div>
-              {!collapsed && (
-                <div>
-                  <div className="logo-name">ABA Connect</div>
-                  <div className="logo-sub">Admin portal</div>
-                </div>
-              )}
+              <div>
+                <div className="logo-name">ABA Connect</div>
+                <div className="logo-sub">Admin portal</div>
+              </div>
             </div>
           )}
         </div>
-        <button
-          type="button"
-          className="sidebar-toggle"
-          onClick={() => setCollapsed((v) => !v)}
-          title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-          aria-expanded={!collapsed}
-        >
-          <i
-            className={`ti ${collapsed ? "ti-layout-sidebar-left-expand" : "ti-layout-sidebar-left-collapse"}`}
-            aria-hidden="true"
-          />
-        </button>
       </div>
 
       <nav className="nav">
