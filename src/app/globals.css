@@ -2,71 +2,76 @@
 
 /*
   ABA Connect design tokens.
-  - Neutral UI chrome follows shadcn Zinc (background/card/border/muted/ink).
-  - Brand accents stay ABS-specific: blue (actions/nav), pink/lavender secondary,
-    teal / amber / coral for status only. Never invent a fourth status color.
+  - Neutral UI chrome = shadcn Neutral/Zinc base (oklch). Source of truth is :root.
+  - ABS brand accents (blue/lavender, pink, teal, amber, coral) stay as the accent
+    layer for buttons, active nav, and status — never used as page chrome.
 */
+
+:root {
+  --radius: 0.625rem;
+
+  /* —— shadcn Neutral / Zinc chrome (light) —— */
+  --background: oklch(0.985 0 0); /* zinc-50 page wash; cards stay pure white */
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.708 0 0);
+  --sidebar: oklch(1 0 0);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-ring: oklch(0.708 0 0);
+  /* Active nav uses ABS brand (not Zinc primary) */
+  --sidebar-accent: #eaf1fc;
+  --sidebar-accent-foreground: #2d5bb0;
+  --sidebar-primary: #5889e0;
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+}
+
 @theme {
   --font-sans: var(--font-dm-sans), "DM Sans", ui-sans-serif, system-ui, sans-serif;
 
-  /* Surfaces — Zinc neutrals (shadcn default chrome) */
-  --color-app: #fafafa; /* zinc-50 */
-  --color-sidebar: #ffffff;
-  --color-sidebar-border: #e4e4e7; /* zinc-200 */
-  --color-card: #ffffff;
-  --color-line: #e4e4e7; /* zinc-200 */
-  --color-muted: #f4f4f5; /* zinc-100 */
+  /* Legacy chrome aliases → shadcn Neutral tokens (one-way mapping) */
+  --color-app: var(--background);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-card: var(--card);
+  --color-line: var(--border);
+  --color-muted: var(--muted);
+  --color-ink: var(--foreground);
+  --color-ink2: oklch(0.442 0.017 285.786); /* zinc-600 secondary text */
+  --color-ink3: var(--muted-foreground);
 
-  /* Brand */
+  /* ABS brand accents — unchanged */
   --color-blue: #5889e0;
   --color-blue-light: #eaf1fc;
   --color-blue-mid: #9cb9ec;
   --color-blue-dark: #2d5bb0;
 
-  /* Secondary accent */
   --color-pink: #ff737e;
   --color-pink-light: #ffedef;
   --color-pink-dark: #c23f4b;
 
-  /* Status — warning */
   --color-amber: #ef9f27;
   --color-amber-light: #faeeda;
   --color-amber-dark: #92600c;
 
-  /* Status — success */
   --color-teal: #1a9a6e;
   --color-teal-light: #e1f5ee;
   --color-teal-dark: #0c6b4c;
 
-  /* Status — danger */
   --color-coral: #e0524b;
   --color-coral-light: #fceae9;
   --color-coral-dark: #9c2d27;
-
-  /* Text — Zinc scale */
-  --color-ink: #09090b; /* zinc-950 */
-  --color-ink2: #52525b; /* zinc-600 */
-  --color-ink3: #71717a; /* zinc-500 */
-}
-
-:root {
-  /* shadcn semantic aliases → our Zinc chrome + ABS accents */
-  --background: var(--color-app);
-  --foreground: var(--color-ink);
-  --card: var(--color-card);
-  --card-foreground: var(--color-ink);
-  --popover: var(--color-card);
-  --popover-foreground: var(--color-ink);
-  --muted: var(--color-muted);
-  --muted-foreground: var(--color-ink3);
-  --border: var(--color-line);
-  --input: var(--color-line);
-  --ring: var(--color-blue-mid);
-  --sidebar: var(--color-sidebar);
-  --sidebar-foreground: var(--color-ink);
-  --sidebar-border: var(--color-sidebar-border);
-  --sidebar-accent: var(--color-blue-light);
-  --sidebar-accent-foreground: var(--color-blue-dark);
 }
 
 html,
@@ -75,8 +80,8 @@ body {
 }
 
 body {
-  background: var(--color-app);
-  color: var(--color-ink);
+  background: var(--background);
+  color: var(--foreground);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
 }
@@ -118,7 +123,7 @@ body {
     color: var(--color-ink2);
   }
 
-  /* Elevated surfaces — cards sit on #F4F5F7 and read as lifted planes */
+  /* Surfaces — white cards on Zinc page wash; border-first, shadow-xs only */
   .card,
   .stat-card,
   .full-card,
@@ -128,12 +133,10 @@ body {
   .action-card,
   .settings-panel,
   .st-panel .full-card {
-    background: #ffffff;
-    border: 1px solid var(--color-line);
-    border-radius: 12px;
-    box-shadow:
-      0 1px 3px rgba(0, 0, 0, 0.06),
-      0 1px 2px rgba(0, 0, 0, 0.04);
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
   }
 
   /* Rule 1 — muted informational / compliance notices (no box) */
@@ -153,7 +156,7 @@ body {
 
   /* Rule 2 — genuine action-required alerts (white + left accent only) */
   .alert-row {
-    background: #ffffff;
+    background: var(--card);
     border: 1px solid var(--color-line);
     border-left: 3px solid #e0524b;
     border-radius: 8px;
@@ -200,7 +203,7 @@ body {
   /* Rule 3 — action / upload cards */
   .action-card,
   .cn-upload-card {
-    background: #ffffff;
+    background: var(--card);
     border: 1px solid var(--color-line);
     border-radius: 10px;
     padding: 16px 20px;
@@ -276,7 +279,7 @@ body {
     background: var(--color-blue-dark);
   }
   .btn-outline {
-    background: #fff;
+    background: var(--card);
     border-color: var(--color-line);
     color: var(--color-ink2);
   }
@@ -304,8 +307,8 @@ body {
     color: var(--color-ink);
   }
   .nav-item.active {
-    background: #eaf1fc;
-    color: #2d5bb0;
+    background: var(--sidebar-accent);
+    color: var(--sidebar-accent-foreground);
     font-weight: 600;
   }
   .nav-label {
@@ -344,10 +347,10 @@ body {
     position: relative;
     width: 240px;
     flex-shrink: 0;
-    background: #ffffff;
+    background: var(--sidebar);
     display: flex;
     flex-direction: column;
-    border-right: 1px solid var(--color-sidebar-border);
+    border-right: 1px solid var(--sidebar-border);
     transition: width 200ms ease;
     overflow: hidden;
   }
@@ -441,7 +444,7 @@ body {
     flex-shrink: 0;
   }
   .logo-icon.logo-icon-image {
-    background: #fff;
+    background: var(--card);
     overflow: hidden;
   }
   .logo-icon .logo-img {
@@ -488,7 +491,7 @@ body {
     color: var(--color-ink2);
   }
   .nav-item.active i {
-    color: #2d5bb0;
+    color: var(--sidebar-accent-foreground);
   }
   .sidebar-collapsed .nav-item {
     justify-content: center;
@@ -610,7 +613,7 @@ body {
     flex-direction: column;
     overflow-x: hidden;
     overflow-y: auto;
-    background: var(--color-app);
+    background: var(--background);
     min-width: 0;
   }
   .topbar {
@@ -618,10 +621,10 @@ body {
     top: 0;
     z-index: 20;
     height: 56px;
-    background: color-mix(in srgb, #ffffff 60%, transparent);
+    background: color-mix(in oklab, var(--background) 60%, transparent);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
-    border-bottom: 1px solid var(--color-sidebar-border);
+    border-bottom: 1px solid var(--border);
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -746,7 +749,7 @@ body {
     display: flex;
     flex-direction: column;
     gap: 16px;
-    background: var(--color-app);
+    background: var(--background);
   }
   .page-stack {
     display: flex;
@@ -833,7 +836,7 @@ body {
   .kb-col-head {
     padding: 10px 12px 8px;
     border-bottom: 0.5px solid var(--color-line);
-    background: #fff;
+    background: var(--card);
     border-radius: 12px 12px 0 0;
     display: flex;
     align-items: center;
@@ -971,7 +974,7 @@ body {
     padding: 20px;
   }
   .modal-box {
-    background: #ffffff;
+    background: var(--card);
     border: 1px solid var(--color-line);
     border-radius: 14px;
     width: 100%;
@@ -999,7 +1002,7 @@ body {
     color: var(--color-ink);
     font-family: var(--font-sans);
     outline: none;
-    background: #fff;
+    background: var(--card);
   }
   .modal-input:focus,
   .modal-select:focus {
@@ -1018,7 +1021,7 @@ body {
     height: 100vh;
     width: 440px;
     max-width: 92vw;
-    background: #ffffff;
+    background: var(--card);
     border-left: 1px solid var(--color-line);
     box-shadow: -4px 0 24px rgba(0, 0, 0, 0.08);
     z-index: 51;
@@ -1040,7 +1043,7 @@ body {
     font-size: 10px;
     font-weight: 600;
     color: var(--color-ink3);
-    background: #fff;
+    background: var(--card);
     flex-shrink: 0;
   }
   .stage-circle.done {
@@ -1125,7 +1128,7 @@ body {
     font-size: 12px;
     font-weight: 500;
     border: 0.5px solid var(--color-line);
-    background: #fff;
+    background: var(--card);
     color: var(--color-ink2);
     cursor: pointer;
     font-family: var(--font-sans);
@@ -1141,7 +1144,7 @@ body {
   }
   .doc-filter-btn.overdue-tab {
     color: var(--color-coral-dark);
-    background: #ffffff;
+    background: var(--card);
     border-color: var(--color-coral);
   }
   .doc-filter-btn.overdue-tab.active,
@@ -1208,7 +1211,7 @@ body {
     overflow: hidden;
     border: 1px solid var(--color-line);
     border-radius: 10px;
-    background: #ffffff;
+    background: var(--card);
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
   }
   .doc-client-head {
@@ -1280,7 +1283,7 @@ body {
     gap: 1px;
     padding: 6px 8px;
     border-radius: 6px;
-    background: #ffffff;
+    background: var(--card);
     border: 1px solid var(--color-line);
     border-left: 3px solid #1a9a6e;
     margin-bottom: 3px;
@@ -1300,7 +1303,7 @@ body {
   }
   .cn-sched-swapped {
     border-left-color: #ef9f27;
-    background: #ffffff;
+    background: var(--card);
   }
   .cn-sched-swapped .cn-sched-bt {
     color: var(--color-ink);
@@ -1312,7 +1315,7 @@ body {
     text-align: center;
   }
   .cn-sched-unfilled {
-    background: #ffffff;
+    background: var(--card);
     border: 1px solid var(--color-line);
     border-left: 3px solid #e0524b;
     color: var(--color-ink);
@@ -1358,7 +1361,7 @@ body {
     color: transparent;
     transition: all 0.15s;
     font-size: 13px;
-    background: #fff;
+    background: var(--card);
   }
   .cn-check input:checked + .cn-check-box {
     background: var(--color-teal);
@@ -1385,15 +1388,15 @@ body {
     white-space: nowrap;
   }
   .cn-row-flag {
-    background: #ffffff;
+    background: var(--card);
     box-shadow: inset 3px 0 0 #ef9f27;
   }
   .cn-row-unfilled {
-    background: #ffffff;
+    background: var(--card);
     box-shadow: inset 3px 0 0 #e0524b;
   }
   .cn-row-override {
-    background: #ffffff;
+    background: var(--card);
     box-shadow: inset 3px 0 0 var(--color-ink3);
   }
   .cn-missing-cell {
@@ -1453,7 +1456,7 @@ body {
   .cn-upload-result {
     margin-top: 12px;
     padding: 10px 14px;
-    background: #fff;
+    background: var(--card);
     border: 1px solid var(--color-line);
     border-radius: 8px;
     font-size: 12px;
@@ -1479,7 +1482,7 @@ body {
     flex-direction: column;
     gap: 8px;
     padding: 18px 18px 16px;
-    background-image: linear-gradient(to top, #ffffff, #fbfcfd);
+    background: var(--card);
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
   }
   .stat-card-hd {
@@ -1497,7 +1500,7 @@ body {
     padding: 2px 8px;
     border: 1px solid;
     border-radius: 999px;
-    background: #fff;
+    background: var(--card);
     font-size: 10px;
     font-weight: 600;
     line-height: 1.3;
@@ -1667,7 +1670,7 @@ body {
     border-radius: 10px;
     margin-bottom: 6px;
     border: 1px solid var(--color-line);
-    background: #ffffff;
+    background: var(--card);
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
     text-decoration: none;
     color: inherit;
@@ -1910,7 +1913,7 @@ body {
     font-size: 13px;
     font-family: var(--font-sans);
     color: var(--color-ink);
-    background: #fff;
+    background: var(--card);
     outline: none;
     transition: border-color 0.15s;
   }
@@ -1924,7 +1927,7 @@ body {
     font-size: 12px;
     font-family: var(--font-sans);
     color: var(--color-ink);
-    background: #fff;
+    background: var(--card);
     outline: none;
   }
   .st-toggle {
@@ -1989,7 +1992,7 @@ body {
   }
 
   .emp-card {
-    background: #ffffff;
+    background: var(--card);
     border: 1px solid var(--color-line);
     border-radius: 12px;
     box-shadow:
