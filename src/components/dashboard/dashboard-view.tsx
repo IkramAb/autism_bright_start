@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import type { DashboardData } from "@/lib/dashboard";
 import { AddClientModal } from "@/components/pipeline/modals";
+import { PageHeader } from "@/components/shell/page-header";
+import { ROUTE_META } from "@/lib/nav";
 
 /** Map any status class/label to the three allowed status pills (or neutral gray). */
 function statusPillClass(raw: string, label = ""): string {
@@ -79,9 +81,12 @@ export function DashboardView({ data }: { data: DashboardData }) {
     return () => window.removeEventListener("aba:primary-action", onPrimary as EventListener);
   }, []);
 
+  const meta = ROUTE_META["/dashboard"];
+
   return (
     <div className="page-stack">
       {showAdd && <AddClientModal onClose={() => setShowAdd(false)} />}
+      <PageHeader title={meta.title} subtitle={meta.subtitle} />
       <div className="stat-row">
         {data.stats.map((stat) => {
           const trend = trendColor(stat);
@@ -134,7 +139,7 @@ export function DashboardView({ data }: { data: DashboardData }) {
       <div className="grid-2">
         <div className="card">
           <div className="card-hd">
-            <span className="card-title">Onboarding pipeline</span>
+            <h2 className="card-title">Onboarding pipeline</h2>
             <Link href="/pipeline" className="view-link">
               View all →
             </Link>
@@ -171,7 +176,7 @@ export function DashboardView({ data }: { data: DashboardData }) {
 
         <div className="card">
           <div className="card-hd">
-            <span className="card-title">Document alerts</span>
+            <h2 className="card-title">Document alerts</h2>
             <Link href="/documents" className="view-link">
               View all →
             </Link>
@@ -214,7 +219,7 @@ export function DashboardView({ data }: { data: DashboardData }) {
       <div className="grid-2">
         <div className="card">
           <div className="card-hd">
-            <span className="card-title">Staff onboarding</span>
+            <h2 className="card-title">Staff onboarding</h2>
             <Link href="/onboarding" className="view-link">
               View all →
             </Link>
@@ -265,7 +270,7 @@ export function DashboardView({ data }: { data: DashboardData }) {
 
         <div className="card">
           <div className="card-hd">
-            <span className="card-title">Case notes — this week</span>
+            <h2 className="card-title">Case notes — this week</h2>
             <Link href="/case-notes" className="view-link">
               View all →
             </Link>

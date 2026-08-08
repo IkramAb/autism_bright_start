@@ -1,25 +1,43 @@
 "use client";
 
+import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ROUTE_META } from "@/lib/nav";
+import { ROUTE_META, type RouteMeta } from "@/lib/nav";
 
-function matchRoute(pathname: string) {
+const FALLBACK: RouteMeta = {
+  title: "ABA Connect",
+  action: "Add client",
+  crumbs: ["Dashboard"],
+  subtitle: "",
+};
+
+function matchRoute(pathname: string): RouteMeta {
   const key = Object.keys(ROUTE_META).find(
     (href) => pathname === href || pathname.startsWith(href + "/"),
   );
-  return key ? ROUTE_META[key] : { title: "ABA Connect", action: "Add client" };
+  return key ? ROUTE_META[key] : FALLBACK;
+}
+
+/** Map breadcrumb label → href for intermediate crumbs. */
+function crumbHref(label: string): string | null {
+  switch (label) {
+    case "Dashboard":
+      return "/dashboard";
+    case "Clients":
+      return "/clients";
+    case "Staff":
+      return "/staff";
+    case "Settings":
+      return "/settings";
+    default:
+      return null;
+  }
 }
 
 export function Topbar({ adminName }: { adminName: string }) {
   void adminName;
   const pathname = usePathname();
   const meta = matchRoute(pathname);
-
-  const dateLabel = new Date().toLocaleDateString("en-US", {
-    weekday: "long",
-    month: "long",
-    day: "numeric",
-  });
 
   return (
     <header className="topbar">
@@ -34,16 +52,34 @@ export function Topbar({ adminName }: { adminName: string }) {
           <i className="ti ti-layout-sidebar" aria-hidden="true" />
         </button>
         <span className="topbar-sep" aria-hidden="true" />
-        <div className="topbar-crumbs">
-          <span className="topbar-title">{meta.title}</span>
-          <span className="topbar-sub">{dateLabel}</span>
-        </div>
+        <nav className="topbar-crumbs breadcrumb" aria-label="Breadcrumb">
+          {meta.crumbs.map((crumb, i) => {
+            const last = i === meta.crumbs.length - 1;
+            const href = !last ? crumbHref(crumb) : null;
+            return (
+              <span key={`${crumb}-${i}`} style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                {i > 0 && (
+                  <span className="breadcrumb-sep" aria-hidden="true">
+                    /
+                  </span>
+                )}
+                {last ? (
+                  <span className="breadcrumb-current">{crumb}</span>
+                ) : href ? (
+                  <Link href={href}>{crumb}</Link>
+                ) : (
+                  <span>{crumb}</span>
+                )}
+              </span>
+            );
+          })}
+        </nav>
       </div>
 
       <div className="topbar-right">
         <div className="search">
           <i className="ti ti-search" aria-hidden="true" />
-          <input placeholder="Search clients or staff…" />
+          <input placeholder="Search clients or staff…" aria-label="Search clients or staff" />
         </div>
 
         <button className="icon-btn" aria-label="Notifications">

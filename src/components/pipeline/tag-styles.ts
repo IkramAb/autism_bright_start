@@ -1,18 +1,33 @@
 export type TagTone = "teal" | "amber" | "coral" | "blue" | "gray";
 export type DueTone = "teal" | "amber" | "coral" | "neutral";
 
+/** Maps tag tone → muted pill class (prefer class over inline color). */
+export function tagClass(tone: TagTone): string {
+  switch (tone) {
+    case "teal":
+      return "kb-tag kb-tag-teal";
+    case "amber":
+      return "kb-tag kb-tag-amber";
+    case "coral":
+      return "kb-tag kb-tag-coral";
+    case "blue":
+    default:
+      return "kb-tag kb-tag-gray";
+  }
+}
+
+/** @deprecated Prefer tagClass — kept for any remaining inline callers. */
 export function tagStyle(tone: TagTone): React.CSSProperties {
   switch (tone) {
     case "teal":
-      return { background: "var(--color-teal-light)", color: "var(--color-teal-dark)" };
+      return { background: "#eef4ee", color: "#3d6b4a" };
     case "amber":
-      return { background: "var(--color-amber-light)", color: "var(--color-amber-dark)" };
+      return { background: "#f7f1e6", color: "#8a6a2f" };
     case "coral":
-      return { background: "var(--color-coral-light)", color: "var(--color-coral-dark)" };
-    // Blue is brand, not status — collapse to neutral gray
+      return { background: "#f7ecec", color: "#9c4d47" };
     case "blue":
     default:
-      return { background: "#eef1f5", color: "#5c6270" };
+      return { background: "var(--color-muted)", color: "var(--color-ink2)" };
   }
 }
 

@@ -7,6 +7,8 @@ import type { DocFilterCategory } from "@/lib/documents";
 import { filterDocs } from "@/lib/documents";
 import { DocumentTable } from "@/components/documents/document-table";
 import { UploadDocModal } from "@/components/documents/upload-doc-modal";
+import { PageHeader } from "@/components/shell/page-header";
+import { ROUTE_META } from "@/lib/nav";
 
 export function DocumentTrackerView({ data }: { data: DocTrackerData }) {
   const [filter, setFilter] = useState<DocFilterCategory>("all");
@@ -48,12 +50,12 @@ export function DocumentTrackerView({ data }: { data: DocTrackerData }) {
     });
   }
 
+  const meta = ROUTE_META["/documents"];
+
   return (
     <div>
       {showUpload && <UploadDocModal data={data} onClose={() => setShowUpload(false)} />}
-      <p className="page-meta" style={{ marginBottom: 12 }}>
-        All clients · all documents in one place
-      </p>
+      <PageHeader title={meta.title} subtitle={meta.subtitle} />
 
       <div className="filter-tab-row">
         <FilterTab active={filter === "all"} onClick={() => setFilter("all")}>

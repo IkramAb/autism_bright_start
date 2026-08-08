@@ -22,6 +22,7 @@ export type StaffListRow = {
   id: string;
   fullName: string;
   email: string | null;
+  phone: string | null;
   role: string;
   roleType: string | null;
   status: StaffStatus;
@@ -172,6 +173,7 @@ export async function getStaffDirectoryData(): Promise<StaffListRow[]> {
       id: s.id,
       fullName: s.full_name,
       email: s.email,
+      phone: s.phone ?? null,
       role: s.role,
       roleType: s.role_type,
       status: s.status,

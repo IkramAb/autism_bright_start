@@ -6,8 +6,11 @@ import { fetchStaffDetail } from "@/app/(app)/staff/actions";
 import { StaffDetailPanel } from "./staff-detail-panel";
 import { AddEmployeeModal } from "./add-employee-modal";
 import type { StaffDetail } from "@/lib/staff";
+import { PageHeader } from "@/components/shell/page-header";
+import { ROUTE_META } from "@/lib/nav";
 
 export function OnboardingView({ cards }: { cards: OnboardingCard[] }) {
+  const meta = ROUTE_META["/onboarding"];
   const [detail, setDetail] = useState<StaffDetail | null>(null);
   const [showAdd, setShowAdd] = useState(false);
   const [, startTransition] = useTransition();
@@ -33,9 +36,10 @@ export function OnboardingView({ cards }: { cards: OnboardingCard[] }) {
   return (
     <div>
       {showAdd && <AddEmployeeModal onClose={() => setShowAdd(false)} />}
-      <p className="page-meta" style={{ marginBottom: 16 }}>
-        {cards.length} employees in onboarding
-      </p>
+      <PageHeader
+        title={meta.title}
+        subtitle={`${cards.length} employees in onboarding · ${meta.subtitle}`}
+      />
 
       <div className="page-stack">
         {cards.map((card) => (
@@ -67,7 +71,9 @@ export function OnboardingView({ cards }: { cards: OnboardingCard[] }) {
                 </div>
                 <div>
                   <div style={{ fontSize: 14, fontWeight: 600 }}>{card.fullName}</div>
-                  <div style={{ fontSize: 11, color: "var(--color-ink3)" }}>{card.role}</div>
+                  <div style={{ marginTop: 4 }}>
+                    <span className="pill pill-outline">{card.role}</span>
+                  </div>
                 </div>
               </div>
               <span className={`pill ${card.statusClass}`}>{card.statusLabel}</span>

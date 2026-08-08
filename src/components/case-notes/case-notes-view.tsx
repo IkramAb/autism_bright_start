@@ -7,10 +7,13 @@ import { sendWeeklyReport } from "@/app/(app)/case-notes/actions";
 import { ScheduleTab } from "@/components/case-notes/schedule-tab";
 import { CheckoffTab } from "@/components/case-notes/checkoff-tab";
 import { ComplianceTab } from "@/components/case-notes/compliance-tab";
+import { PageHeader } from "@/components/shell/page-header";
+import { ROUTE_META } from "@/lib/nav";
 
 type Tab = "schedule" | "checkoff" | "compliance";
 
 export function CaseNotesView({ data }: { data: CaseNotesData }) {
+  const meta = ROUTE_META["/case-notes"];
   const [tab, setTab] = useState<Tab>("schedule");
   const [pending, startTransition] = useTransition();
   const router = useRouter();
@@ -38,18 +41,18 @@ export function CaseNotesView({ data }: { data: CaseNotesData }) {
   return (
     <div className="page-full">
       <div className="page-toolbar">
-        <div>
-          <div className="page-toolbar-sub">
-            {data.week.label} · Admin-tracked, updated weekly from Catalyst
-          </div>
-        </div>
-        <div style={{ display: "flex", gap: 8, alignItems: "center", flexShrink: 0 }}>
+        <PageHeader
+          title={meta.title}
+          subtitle={`${data.week.label} · ${meta.subtitle}`}
+          actions={
+            <>
           <select
             className="modal-select"
             style={{ width: "auto", fontSize: 12, padding: "7px 12px" }}
             value={data.week.id}
             onChange={(e) => onWeekChange(e.target.value)}
             disabled={pending}
+            aria-label="Select week"
           >
             {data.weeks.map((w) => (
               <option key={w.id} value={w.id}>
@@ -63,9 +66,12 @@ export function CaseNotesView({ data }: { data: CaseNotesData }) {
             onClick={handleSendReport}
             disabled={pending}
           >
-            <i className="ti ti-send" style={{ fontSize: 13 }} /> Send weekly report
+            <i className="ti ti-send" style={{ fontSize: 13 }} aria-hidden="true" /> Send weekly
+            report
           </button>
-        </div>
+            </>
+          }
+        />
       </div>
 
       <div className="page-body">
@@ -112,7 +118,7 @@ function TabBtn({
 }) {
   return (
     <button type="button" className={`cn-tab${active ? " active" : ""}`} onClick={onClick}>
-      <i className={`ti ti-${icon}`} style={{ fontSize: 13 }} />
+      <i className={`ti ti-${icon}`} style={{ fontSize: 13 }} aria-hidden="true" />
       {children}
     </button>
   );

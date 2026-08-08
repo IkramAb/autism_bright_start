@@ -114,6 +114,8 @@ export function Sidebar({
                   href={item.href}
                   className={`nav-item${active ? " active" : ""}`}
                   title={collapsed ? item.label : undefined}
+                  aria-label={collapsed ? item.label : undefined}
+                  aria-current={active ? "page" : undefined}
                 >
                   <i className={`ti ti-${item.icon}`} aria-hidden="true" />
                   {!collapsed && <span>{item.label}</span>}

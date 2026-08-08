@@ -5,10 +5,13 @@ import { useRouter } from "next/navigation";
 import type { TrainingFlatRow } from "@/lib/staff";
 import { updateTraining } from "@/app/(app)/staff/actions";
 import { UploadCertModal } from "./upload-cert-modal";
+import { PageHeader } from "@/components/shell/page-header";
+import { ROUTE_META } from "@/lib/nav";
 
 type Filter = "all" | "overdue" | "pending" | "complete";
 
 export function TrainingView({ rows }: { rows: TrainingFlatRow[] }) {
+  const meta = ROUTE_META["/training"];
   const router = useRouter();
   const [filter, setFilter] = useState<Filter>("all");
   const [showUpload, setShowUpload] = useState(false);
@@ -46,7 +49,7 @@ export function TrainingView({ rows }: { rows: TrainingFlatRow[] }) {
   return (
     <div>
       {showUpload && <UploadCertModal rows={rows} onClose={() => setShowUpload(false)} />}
-      <p className="page-meta">All staff · all required trainings</p>
+      <PageHeader title={meta.title} subtitle={meta.subtitle} />
 
       <div className="filter-tab-row">
         {(["all", "overdue", "pending", "complete"] as const).map((f) => (
@@ -73,7 +76,7 @@ export function TrainingView({ rows }: { rows: TrainingFlatRow[] }) {
               <tr key={row.id}>
                 <td style={{ fontWeight: 500 }}>{row.staffName}</td>
                 <td>{row.trainingName}</td>
-                <td><span className={`pill ${row.statusClass}`} style={{ fontSize: 10 }}>{row.statusLabel}</span></td>
+                <td><span className={`pill ${row.statusClass}`}>{row.statusLabel}</span></td>
                 <td style={{ fontSize: 11, color: "var(--color-ink3)" }}>{row.dueLabel}</td>
                 <td style={{ fontSize: 11, color: "var(--color-ink3)" }}>{row.completedLabel}</td>
                 <td>
@@ -89,6 +92,13 @@ export function TrainingView({ rows }: { rows: TrainingFlatRow[] }) {
                 </td>
               </tr>
             ))}
+            {filtered.length === 0 && (
+              <tr>
+                <td colSpan={6} style={{ textAlign: "center", padding: 24, color: "var(--muted-foreground)" }}>
+                  No trainings match this filter.
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>

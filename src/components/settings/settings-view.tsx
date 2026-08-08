@@ -28,6 +28,8 @@ import {
   removeOrganizationLogo,
 } from "@/app/(app)/settings/actions";
 import { FIXED_LOGO_HEIGHT } from "@/lib/branding";
+import { PageHeader } from "@/components/shell/page-header";
+import { ROUTE_META } from "@/lib/nav";
 
 type Tab =
   | "organization"
@@ -137,6 +139,8 @@ export function SettingsView({ data }: { data: SettingsData }) {
   const [recipientsModal, setRecipientsModal] = useState<NotificationPrefView | null>(null);
   const [inviteOpen, setInviteOpen] = useState(false);
 
+  const meta = ROUTE_META["/settings"];
+
   return (
     <div className="settings-shell">
       <nav className="settings-nav">
@@ -155,6 +159,7 @@ export function SettingsView({ data }: { data: SettingsData }) {
       </nav>
 
       <div className="settings-content">
+        <PageHeader title={meta.title} subtitle={meta.subtitle} />
         {tab === "organization" && (
           <OrganizationPanel
             data={data}

@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import type { CardView } from "@/lib/pipeline";
 import { advanceStage, setCorrections } from "@/app/(app)/pipeline/actions";
-import { tagStyle } from "./tag-styles";
+import { tagClass } from "./tag-styles";
 
 const STRIP = ["Referral", "Phone screen", "Docs", "CMDE", "ITP", "Agreements", "Active"];
 
@@ -91,7 +91,7 @@ export function ClientDrawer({ card, onClose }: { card: CardView; onClose: () =>
           {/* Tags */}
           <div className="kb-tags" style={{ marginBottom: 0 }}>
             {card.tags.map((t, i) => (
-              <span key={i} className="kb-tag" style={tagStyle(t.tone)}>{t.label}</span>
+              <span key={i} className={tagClass(t.tone)}>{t.label}</span>
             ))}
           </div>
 

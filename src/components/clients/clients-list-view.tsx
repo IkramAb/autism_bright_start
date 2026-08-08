@@ -5,12 +5,19 @@ import Link from "next/link";
 import type { ClientListData, ClientListRow } from "@/lib/clients";
 import { CATALYST_URL } from "@/lib/documents";
 import { AddClientModal } from "@/components/pipeline/modals";
+import { PageHeader } from "@/components/shell/page-header";
+import { ROUTE_META } from "@/lib/nav";
 
 type Filter = "all" | "active" | "onboarding" | "inactive";
+type SortKey = "client" | "status" | "renewal";
+type SortDir = "asc" | "desc";
 
 export function ClientsListView({ data }: { data: ClientListData }) {
+  const meta = ROUTE_META["/clients"];
   const [filter, setFilter] = useState<Filter>("all");
   const [query, setQuery] = useState("");
+  const [sortKey, setSortKey] = useState<SortKey>("client");
+  const [sortDir, setSortDir] = useState<SortDir>("asc");
   const [showAdd, setShowAdd] = useState(false);
 
   useEffect(() => {
@@ -32,34 +39,61 @@ export function ClientsListView({ data }: { data: ClientListData }) {
       const q = query.toLowerCase();
       list = list.filter(
         (r) =>
-          r.refCode.includes(q) ||
+          r.refCode.toLowerCase().includes(q) ||
           r.context.toLowerCase().includes(q) ||
           r.stageLabel.toLowerCase().includes(q),
       );
     }
+
+    list = [...list].sort((a, b) => {
+      let cmp = 0;
+      if (sortKey === "client") cmp = a.refCode.localeCompare(b.refCode);
+      else if (sortKey === "status") cmp = a.stageLabel.localeCompare(b.stageLabel);
+      else {
+        const aKey = a.nextRenewal ?? "";
+        const bKey = b.nextRenewal ?? "";
+        cmp = aKey.localeCompare(bKey);
+      }
+      return sortDir === "asc" ? cmp : -cmp;
+    });
+
     return list;
-  }, [data.rows, filter, query]);
+  }, [data.rows, filter, query, sortKey, sortDir]);
+
+  function toggleSort(key: SortKey) {
+    if (sortKey === key) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    else {
+      setSortKey(key);
+      setSortDir("asc");
+    }
+  }
+
+  function sortIcon(key: SortKey) {
+    if (sortKey !== key) return "ti-selector";
+    return sortDir === "asc" ? "ti-sort-ascending" : "ti-sort-descending";
+  }
 
   const { counts } = data;
 
   return (
     <div>
       {showAdd && <AddClientModal onClose={() => setShowAdd(false)} />}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <p className="page-meta">
-          {counts.all} total clients · {counts.active} active · {counts.onboarding} in onboarding
-        </p>
-        <div style={{ display: "flex", gap: 8 }}>
+
+      <PageHeader
+        title={meta.title}
+        subtitle={`${counts.all} total · ${counts.active} active · ${counts.onboarding} in onboarding`}
+        actions={
           <div className="search">
-            <i className="ti ti-search" />
+            <i className="ti ti-search" aria-hidden="true" />
             <input
-              placeholder="Search clients…"
+              placeholder="Search by client code…"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
+              aria-label="Search clients by code"
             />
           </div>
-        </div>
-      </div>
+        }
+      />
 
       <div className="filter-tab-row">
         <FilterBtn active={filter === "all"} onClick={() => setFilter("all")}>
@@ -81,25 +115,40 @@ export function ClientsListView({ data }: { data: ClientListData }) {
           <thead>
             <tr>
               <th>
-                <span className="th-sort">
+                <button
+                  type="button"
+                  className="th-sort"
+                  data-sorted={sortKey === "client" ? "true" : "false"}
+                  onClick={() => toggleSort("client")}
+                >
                   Client
-                  <i className="ti ti-selector" aria-hidden="true" />
-                </span>
+                  <i className={`ti ${sortIcon("client")}`} aria-hidden="true" />
+                </button>
               </th>
               <th>
-                <span className="th-sort">
+                <button
+                  type="button"
+                  className="th-sort"
+                  data-sorted={sortKey === "status" ? "true" : "false"}
+                  onClick={() => toggleSort("status")}
+                >
                   Status
-                  <i className="ti ti-selector" aria-hidden="true" />
-                </span>
+                  <i className={`ti ${sortIcon("status")}`} aria-hidden="true" />
+                </button>
               </th>
               <th>MA</th>
               <th>Assigned BCBA/QSP</th>
               <th>Full record</th>
               <th>
-                <span className="th-sort">
+                <button
+                  type="button"
+                  className="th-sort"
+                  data-sorted={sortKey === "renewal" ? "true" : "false"}
+                  onClick={() => toggleSort("renewal")}
+                >
                   Next renewal
-                  <i className="ti ti-selector" aria-hidden="true" />
-                </span>
+                  <i className={`ti ${sortIcon("renewal")}`} aria-hidden="true" />
+                </button>
               </th>
               <th />
             </tr>
@@ -110,7 +159,10 @@ export function ClientsListView({ data }: { data: ClientListData }) {
             ))}
             {rows.length === 0 && (
               <tr>
-                <td colSpan={7} style={{ textAlign: "center", padding: 24, color: "var(--color-ink3)" }}>
+                <td
+                  colSpan={7}
+                  style={{ textAlign: "center", padding: 24, color: "var(--muted-foreground)" }}
+                >
                   No clients match this filter.
                 </td>
               </tr>
@@ -171,19 +223,28 @@ function ClientRow({ row }: { row: ClientListRow }) {
       ? "var(--color-coral)"
       : row.nextRenewalTone === "amber"
         ? "var(--color-amber)"
-        : "var(--color-ink3)";
+        : "var(--muted-foreground)";
 
   return (
     <tr className="cr-row">
       <td>
         <Link href={`/clients/${row.id}`} style={{ textDecoration: "none", color: "inherit" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
-            <div className="init" style={{ width: 28, height: 28, fontSize: 10, background: row.initBg, color: row.initColor }}>
-              <i className="ti ti-user" style={{ fontSize: 10 }} />
+            <div
+              className="init"
+              style={{
+                width: 28,
+                height: 28,
+                fontSize: 10,
+                background: row.initBg,
+                color: row.initColor,
+              }}
+            >
+              <i className="ti ti-user" style={{ fontSize: 10 }} aria-hidden="true" />
             </div>
             <div>
-              <div style={{ fontWeight: 500, fontSize: 13 }}>Client #{row.refCode}</div>
-              <div style={{ fontSize: 10, color: "var(--color-ink3)" }}>
+              <div style={{ fontWeight: 600, fontSize: 13 }}>Client #{row.refCode}</div>
+              <div style={{ fontSize: 11, color: "var(--muted-foreground)" }}>
                 {row.serviceStartLabel ?? "Start —"} · {row.context}
               </div>
             </div>
@@ -191,13 +252,16 @@ function ClientRow({ row }: { row: ClientListRow }) {
         </Link>
       </td>
       <td>
-        <span className={`pill pill-icon ${row.stagePillClass}`} style={{ fontSize: 10 }}>
-          <i className={`ti ${pillIcon(row.stagePillClass, row.stageLabel)}`} aria-hidden="true" />
+        <span className={`pill pill-icon ${row.stagePillClass}`}>
+          <i
+            className={`ti ${pillIcon(row.stagePillClass, row.stageLabel)}`}
+            aria-hidden="true"
+          />
           {row.stageLabel}
         </span>
       </td>
       <td>
-        <span className={`pill pill-icon ${row.maPillClass}`} style={{ fontSize: 10 }}>
+        <span className={`pill pill-icon ${row.maPillClass}`}>
           <i className={`ti ${pillIcon(row.maPillClass, row.maLabel)}`} aria-hidden="true" />
           {row.maLabel}
         </span>
@@ -212,14 +276,19 @@ function ClientRow({ row }: { row: ClientListRow }) {
           style={{ fontSize: 10, padding: "3px 9px" }}
           onClick={(e) => e.stopPropagation()}
         >
-          <i className="ti ti-external-link" style={{ fontSize: 11 }} /> Go to Catalyst
+          <i className="ti ti-external-link" style={{ fontSize: 11 }} aria-hidden="true" /> Go to
+          Catalyst
         </a>
       </td>
       <td style={{ fontSize: 11, color: renewalColor, fontWeight: row.nextRenewal ? 500 : 400 }}>
         {row.nextRenewal ?? "—"}
       </td>
       <td>
-        <Link href={`/clients/${row.id}`} className="btn btn-outline" style={{ fontSize: 11, padding: "4px 10px" }}>
+        <Link
+          href={`/clients/${row.id}`}
+          className="btn btn-outline"
+          style={{ fontSize: 11, padding: "4px 10px" }}
+        >
           View →
         </Link>
       </td>
