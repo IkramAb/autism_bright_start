@@ -26,13 +26,21 @@
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
   --ring: oklch(0.708 0 0);
-  --sidebar: oklch(1 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
-  /* Active nav uses ABS brand (not Zinc primary) */
-  --sidebar-accent: #eaf1fc;
-  --sidebar-accent-foreground: #2d5bb0;
+  /* —— Sidebar surface: dark ink, independent of the light app chrome ——
+     Consumed ONLY by `.sidebar`-scoped rules. The light --background / --card /
+     --border / --color-ink* families stay untouched for the rest of the app. */
+  --sidebar: oklch(0.205 0 0); /* near-black zinc surface */
+  --sidebar-foreground: oklch(0.985 0 0); /* primary text */
+  --sidebar-muted: oklch(0.72 0 0); /* idle nav text */
+  --sidebar-faint: oklch(0.62 0 0); /* group labels, icons, user role */
+  --sidebar-border: oklch(1 0 0 / 10%); /* hairlines on dark */
+  --sidebar-ring: oklch(0.556 0 0);
+  --sidebar-hover: oklch(1 0 0 / 6%); /* faint white overlay */
+  /* Active nav uses ABS brand (not Zinc primary). Text stays white — the blue
+     on the tinted fill is only ~4:1 and would fail AA; the brand shows up in
+     the left accent bar and the active icon instead. */
+  --sidebar-accent: color-mix(in oklab, #5889e0 18%, transparent);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-primary: #5889e0;
   --sidebar-primary-foreground: oklch(0.985 0 0);
 }
@@ -344,30 +352,50 @@ body {
     background: var(--color-app);
   }
 
-  /* Sidebar nav items — shadcn-dashboard-starter visual treatment */
-  .nav-item {
+  /* Sidebar nav items — dark surface, brand-blue active accent.
+     Everything here is `.sidebar`-scoped: `.nav-label` is also used by the
+     light-surface `.settings-nav` in the Settings page. */
+  .sidebar .nav-item {
+    position: relative; /* anchors the ::before accent bar */
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
     padding: 8px 10px;
     border-radius: 8px;
     cursor: pointer;
-    color: var(--color-ink2);
+    color: var(--sidebar-muted);
     background: transparent;
     font-size: 13px;
     font-weight: 500;
     transition: background 0.12s, color 0.12s;
     text-decoration: none;
   }
-  .nav-item:hover {
-    background: var(--color-app);
-    color: var(--color-ink);
+  .sidebar .nav-item:hover {
+    background: var(--sidebar-hover);
+    color: var(--sidebar-foreground);
   }
-  .nav-item.active {
+  .sidebar .nav-item.active {
     background: var(--sidebar-accent);
     color: var(--sidebar-accent-foreground);
     font-weight: 600;
   }
+  .sidebar .nav-item.active::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 3px;
+    height: 18px;
+    border-radius: 0 3px 3px 0;
+    background: var(--sidebar-primary);
+  }
+  .sidebar .nav-item:focus-visible {
+    outline: 2px solid var(--sidebar-ring);
+    outline-offset: 2px;
+  }
+
+  /* Base .nav-label is shared with .settings-nav — keep it light. */
   .nav-label {
     font-size: 11px;
     font-weight: 600;
@@ -376,7 +404,12 @@ body {
     color: var(--color-ink3);
     padding: 16px 10px 6px;
   }
-  .nav-group:first-child .nav-label {
+  .sidebar .nav-label {
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    color: var(--sidebar-faint);
+  }
+  .sidebar .nav-group:first-child .nav-label {
     padding-top: 4px;
   }
 
@@ -405,6 +438,7 @@ body {
     width: 240px;
     flex-shrink: 0;
     background: var(--sidebar);
+    color-scheme: dark; /* native scrollbar inside .nav renders dark */
     display: flex;
     flex-direction: column;
     border-right: 1px solid var(--sidebar-border);
@@ -430,42 +464,61 @@ body {
   .sidebar-rail:focus-visible {
     background: color-mix(in srgb, var(--color-blue) 35%, transparent);
   }
+  /* Brand lockup — 32px mark + wordmark, on a row exactly as tall as the
+     topbar so the two bottom borders line up across the shell. */
   .sidebar-logo {
     display: flex;
     align-items: center;
-    justify-content: center;
-    gap: 8px;
-    padding: 10px 12px;
-    border-bottom: 1px solid var(--color-sidebar-border);
-  }
-  .sidebar:not(.sidebar-collapsed) .sidebar-logo {
-    justify-content: flex-start;
+    gap: 10px;
+    height: 56px;
+    flex-shrink: 0;
+    padding: 0 14px;
+    border-bottom: 1px solid var(--sidebar-border);
   }
   .sidebar-collapsed .sidebar-logo {
-    padding: 10px 8px;
-  }
-  .sidebar-logo-main {
-    flex: 1;
-    min-width: 0;
-    display: flex;
-    align-items: center;
-  }
-  .sidebar-collapsed .sidebar-logo-main {
-    flex: none;
+    padding: 0;
     justify-content: center;
   }
-  .sidebar-brand-fallback {
+  /* The mark asset is an opaque JPEG with a white ground and ~45% dead padding,
+     so it sits in a white chip and is scaled up to crop that padding away. */
+  .sidebar-mark {
+    width: 32px;
+    height: 32px;
+    flex-shrink: 0;
+    border-radius: 8px;
+    background: #fff;
+    overflow: hidden;
     display: flex;
     align-items: center;
-    gap: 10px;
+    justify-content: center;
   }
-  .brand-logo-bulb {
-    width: 36px;
-    height: 36px;
-    max-width: 36px;
-    max-height: 36px;
+  .sidebar-mark img {
+    width: 150%;
+    height: 150%;
     object-fit: contain;
   }
+  .sidebar-wordmark {
+    min-width: 0;
+    display: grid;
+    line-height: 1.2;
+  }
+  .sidebar-wordmark-name {
+    font-size: 13px;
+    font-weight: 650;
+    letter-spacing: -0.01em;
+    color: var(--sidebar-foreground);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .sidebar-wordmark-sub {
+    font-size: 9.5px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--sidebar-faint);
+  }
+  /* Used by the login screen's no-logo fallback — keep light. */
   .logo-icon {
     width: 36px;
     height: 36px;
@@ -477,32 +530,6 @@ body {
     color: #fff;
     font-size: 18px;
     flex-shrink: 0;
-  }
-  .logo-icon.logo-icon-image {
-    background: var(--card);
-    overflow: hidden;
-  }
-  .logo-icon .logo-img {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-  }
-  .brand-logo {
-    display: block;
-    width: auto;
-    max-width: 100%;
-    object-fit: contain;
-  }
-  .logo-name {
-    font-size: 15px;
-    font-weight: 700;
-    color: var(--color-ink);
-    letter-spacing: -0.01em;
-  }
-  .logo-sub {
-    font-size: 10px;
-    color: var(--color-ink3);
-    margin-top: 1px;
   }
   .nav {
     padding: 8px 10px;
@@ -517,16 +544,21 @@ body {
     margin-bottom: 8px;
     padding-bottom: 4px;
   }
-  .nav-item i {
+  .sidebar .nav-item i {
     font-size: 16px;
-    color: var(--color-ink3);
+    color: var(--sidebar-faint);
     flex-shrink: 0;
   }
-  .nav-item:hover i {
-    color: var(--color-ink2);
+  .sidebar .nav-item:hover i {
+    color: var(--sidebar-foreground);
   }
-  .nav-item.active i {
-    color: var(--sidebar-accent-foreground);
+  .sidebar .nav-item.active i {
+    color: var(--sidebar-primary);
+  }
+  /* Collapsed hides the group labels, so groups need a visible seam instead. */
+  .sidebar-collapsed .nav-group + .nav-group {
+    border-top: 1px solid var(--sidebar-border);
+    padding-top: 8px;
   }
   .sidebar-collapsed .nav-item {
     justify-content: center;
@@ -562,7 +594,7 @@ body {
   }
   .sidebar-foot {
     padding: 12px 10px;
-    border-top: 1px solid var(--color-sidebar-border);
+    border-top: 1px solid var(--sidebar-border);
   }
   .sidebar-collapsed .sidebar-foot {
     padding: 10px 6px;
@@ -576,8 +608,8 @@ body {
     border-radius: 10px;
     transition: background 0.12s;
   }
-  .user-row:hover {
-    background: var(--color-app);
+  .sidebar .user-row:hover {
+    background: var(--sidebar-hover);
   }
   .user-row-collapsed {
     justify-content: center;
@@ -612,11 +644,11 @@ body {
   .user-name {
     font-size: 13px;
     font-weight: 600;
-    color: var(--color-ink);
+    color: var(--sidebar-foreground);
   }
   .user-role {
     font-size: 11px;
-    color: var(--color-ink3);
+    color: var(--sidebar-faint);
   }
   .user-actions {
     margin-left: auto;
@@ -631,13 +663,13 @@ body {
     border: none;
     border-radius: 6px;
     background: transparent;
-    color: var(--color-ink3);
+    color: var(--sidebar-faint);
     cursor: pointer;
     padding: 0;
   }
   .user-menu-chevron:hover {
-    background: var(--color-muted);
-    color: var(--color-ink2);
+    background: var(--sidebar-hover);
+    color: var(--sidebar-foreground);
   }
   .user-menu-chevron i {
     font-size: 16px;
@@ -954,7 +986,7 @@ body {
     gap: 12px;
     padding: 14px 24px;
     background: var(--color-card);
-    border-bottom: 1px solid var(--color-sidebar-border);
+    border-bottom: 1px solid var(--border);
     flex-shrink: 0;
   }
   .page-toolbar-sub {
@@ -1816,22 +1848,19 @@ body {
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
-    gap: 8px;
-    flex-wrap: wrap;
+    gap: 12px;
   }
-  .stat-badge {
-    display: inline-flex;
+  /* Deliberately not `.stat-icon`, which the case-notes compliance tab renders
+     at 24px inside a `.stat-icon-row`. */
+  .stat-tile {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: flex;
     align-items: center;
+    justify-content: center;
+    font-size: 18px;
     flex-shrink: 0;
-    max-width: none;
-    padding: 2px 8px;
-    border: 1px solid;
-    border-radius: 999px;
-    background: var(--card);
-    font-size: 10px;
-    font-weight: 600;
-    line-height: 1.3;
-    white-space: nowrap;
   }
   .stat-card-ft {
     display: flex;
@@ -1885,6 +1914,46 @@ body {
     font-size: 13px;
     font-weight: 500;
     line-height: 1.3;
+    color: var(--color-ink3);
+  }
+  .stat-card-ft .mini-bar {
+    margin-top: 0;
+  }
+  /* Tone on the card drives both the icon tile tint and the mini-bar fill. */
+  .stat-tone-blue .stat-tile {
+    background: var(--color-blue-light);
+    color: var(--color-blue-dark);
+  }
+  .stat-tone-teal .stat-tile {
+    background: var(--color-teal-light);
+    color: var(--color-teal-dark);
+  }
+  .stat-tone-amber .stat-tile {
+    background: var(--color-amber-light);
+    color: var(--color-amber-dark);
+  }
+  .stat-tone-coral .stat-tile {
+    background: var(--color-coral-light);
+    color: var(--color-coral-dark);
+  }
+  .stat-tone-neutral .stat-tile {
+    background: var(--muted);
+    color: var(--muted-foreground);
+  }
+  .stat-tone-blue .mini-fill {
+    background: var(--color-blue);
+  }
+  .stat-tone-teal .mini-fill {
+    background: var(--color-teal);
+  }
+  .stat-tone-amber .mini-fill {
+    background: var(--color-amber);
+  }
+  .stat-tone-coral .mini-fill {
+    background: var(--color-coral);
+  }
+  .stat-tone-neutral .mini-fill {
+    background: var(--color-line);
   }
   .stat-card-link {
     text-decoration: none;

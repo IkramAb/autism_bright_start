@@ -9,7 +9,7 @@ import type { SearchHit, TopbarAlerts } from "@/lib/topbar";
 
 const FALLBACK: RouteMeta = {
   title: "ABA Connect",
-  crumbs: ["Dashboard"],
+  crumbs: ["Overview"],
   subtitle: "",
 };
 
@@ -20,20 +20,13 @@ function matchRoute(pathname: string): RouteMeta {
   return key ? ROUTE_META[key] : FALLBACK;
 }
 
-/** Map breadcrumb label → href for intermediate crumbs. */
+/**
+ * Map breadcrumb label → href for intermediate crumbs. Only "Overview" is ever
+ * both non-last and routable — the middle crumbs are sidebar group labels with
+ * no route, and the page crumbs are always last (never linked).
+ */
 function crumbHref(label: string): string | null {
-  switch (label) {
-    case "Dashboard":
-      return "/dashboard";
-    case "Clients":
-      return "/clients";
-    case "Staff":
-      return "/staff";
-    case "Settings":
-      return "/settings";
-    default:
-      return null;
-  }
+  return label === "Overview" ? "/dashboard" : null;
 }
 
 export function Topbar({

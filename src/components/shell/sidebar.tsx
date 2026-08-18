@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { NAV_GROUPS } from "@/lib/nav";
+import { BRAND_NAME, BRAND_TAGLINE, NAV_GROUPS } from "@/lib/nav";
 import { signOut } from "@/app/login/actions";
 
 const STORAGE_KEY = "aba-sidebar-collapsed";
@@ -12,17 +12,9 @@ type Props = {
   adminName: string;
   adminRole: string;
   adminInitials: string;
-  logoUrl?: string | null;
-  logoHeight?: number;
 };
 
-export function Sidebar({
-  adminName,
-  adminRole,
-  adminInitials,
-  logoUrl,
-  logoHeight = 150,
-}: Props) {
+export function Sidebar({ adminName, adminRole, adminInitials }: Props) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
   const [hydrated, setHydrated] = useState(false);
@@ -54,43 +46,19 @@ export function Sidebar({
     return () => window.removeEventListener("aba:toggle-sidebar", onToggle);
   }, []);
 
-  const displayHeight = logoHeight;
-
   return (
     <aside className={`sidebar${collapsed ? " sidebar-collapsed" : ""}`}>
       <div className="sidebar-logo">
-        <div className="sidebar-logo-main">
-          {collapsed ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src="/branding/logo-bulb.png"
-              alt="Practice logo"
-              className="brand-logo brand-logo-bulb"
-            />
-          ) : logoUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={logoUrl}
-              alt="Practice logo"
-              className="brand-logo"
-              style={{
-                height: displayHeight,
-                maxHeight: displayHeight,
-                maxWidth: "100%",
-              }}
-            />
-          ) : (
-            <div className="sidebar-brand-fallback">
-              <div className="logo-icon">
-                <i className="ti ti-puzzle" aria-hidden="true" />
-              </div>
-              <div>
-                <div className="logo-name">ABA Connect</div>
-                <div className="logo-sub">Admin portal</div>
-              </div>
-            </div>
-          )}
-        </div>
+        <span className="sidebar-mark" aria-hidden="true">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/branding/logo-bulb.png" alt="" />
+        </span>
+        {!collapsed && (
+          <span className="sidebar-wordmark">
+            <span className="sidebar-wordmark-name">{BRAND_NAME}</span>
+            <span className="sidebar-wordmark-sub">{BRAND_TAGLINE}</span>
+          </span>
+        )}
       </div>
 
       <nav className="nav">

@@ -10,95 +10,110 @@ export type NavGroup = {
   items: NavItem[];
 };
 
-/** Sidebar structure, matching the prototype's groups, items, icons, and order. */
+/**
+ * Product wordmark shown in the sidebar header. Lives here rather than in
+ * `lib/branding.ts` because that module pulls in the server-only Supabase admin
+ * client, and the sidebar is a client component.
+ */
+export const BRAND_NAME = "Autism Bright Start";
+export const BRAND_TAGLINE = "Care workspace";
+
+/**
+ * Sidebar structure — grouped by how the practice works (workspace → care
+ * operations → staff operations → admin) rather than by entity type.
+ */
 export const NAV_GROUPS: NavGroup[] = [
   {
-    label: "Overview",
+    label: "Workspace",
     items: [
-      { href: "/dashboard", label: "Dashboard", icon: "layout-dashboard" },
+      { href: "/dashboard", label: "Overview", icon: "layout-dashboard" },
+      { href: "/clients", label: "Clients", icon: "users" },
+      { href: "/staff", label: "Staff", icon: "id-badge" },
     ],
   },
   {
-    label: "Clients",
+    label: "Care operations",
     items: [
       {
         href: "/pipeline",
-        label: "Onboarding pipeline",
+        label: "Onboarding",
         icon: "git-merge",
         badge: { count: 3, tone: "amber" },
       },
-      { href: "/clients", label: "Client record", icon: "users" },
       { href: "/documents", label: "Documents", icon: "files" },
       { href: "/case-notes", label: "Case notes", icon: "writing" },
     ],
   },
   {
-    label: "Staff",
+    label: "Staff operations",
     items: [
-      { href: "/staff", label: "Staff directory", icon: "id-badge" },
-      { href: "/onboarding", label: "Onboarding", icon: "checklist" },
+      { href: "/onboarding", label: "Staff onboarding", icon: "checklist" },
       { href: "/training", label: "Training", icon: "certificate" },
     ],
   },
   {
-    label: "Settings",
+    label: "Admin",
     items: [{ href: "/settings", label: "Settings", icon: "settings" }],
   },
 ];
 
 export type RouteMeta = {
   title: string;
-  /** Breadcrumb trail shown in the topbar (e.g. Dashboard / Clients / …). */
+  /** Breadcrumb trail shown in the topbar (e.g. Overview / Clients / …). */
   crumbs: string[];
   /** One-line muted subtitle under the in-page title. */
   subtitle: string;
 };
 
-/** Per-route topbar / page chrome metadata. */
+/**
+ * Per-route topbar / page chrome metadata. Crumbs follow the sidebar shape:
+ * Overview / <group label> / <nav label>. Group labels have no route of their
+ * own, so `crumbHref()` in the topbar renders them as plain text.
+ */
 export const ROUTE_META: Record<string, RouteMeta> = {
   "/dashboard": {
-    title: "Dashboard",
-    crumbs: ["Dashboard"],
+    title: "Overview",
+    crumbs: ["Overview"],
     subtitle: "Practice overview — clients, pipeline, documents, and case notes.",
-  },
-  "/pipeline": {
-    title: "Onboarding pipeline",
-    crumbs: ["Dashboard", "Clients", "Onboarding pipeline"],
-    subtitle: "Track new referrals through docs, CMDE/ITP, and activation.",
   },
   "/clients": {
     title: "Client records",
-    crumbs: ["Dashboard", "Clients", "Client records"],
+    crumbs: ["Overview", "Workspace", "Clients"],
     subtitle: "PHI-minimized client list — reference codes only.",
+  },
+  "/staff": {
+    title: "Staff directory",
+    crumbs: ["Overview", "Workspace", "Staff"],
+    subtitle: "Clinic roster, roles, trainings, and certifications.",
+  },
+  "/pipeline": {
+    title: "Onboarding pipeline",
+    crumbs: ["Overview", "Care operations", "Onboarding"],
+    subtitle: "Track new referrals through docs, CMDE/ITP, and activation.",
   },
   "/documents": {
     title: "Document tracker",
-    crumbs: ["Dashboard", "Clients", "Documents"],
+    crumbs: ["Overview", "Care operations", "Documents"],
     subtitle: "Renewals, expirations, and document collection status.",
   },
   "/case-notes": {
     title: "Case notes",
-    crumbs: ["Dashboard", "Clients", "Case notes"],
+    crumbs: ["Overview", "Care operations", "Case notes"],
     subtitle: "Daily note compliance against the two-notes-per-day rule.",
-  },
-  "/staff": {
-    title: "Staff directory",
-    crumbs: ["Dashboard", "Staff", "Staff directory"],
-    subtitle: "Clinic roster, roles, trainings, and certifications.",
   },
   "/onboarding": {
     title: "Staff onboarding",
-    crumbs: ["Dashboard", "Staff", "Onboarding"],
+    crumbs: ["Overview", "Staff operations", "Staff onboarding"],
     subtitle: "Checklist progress for employees currently onboarding.",
   },
   "/training": {
     title: "Training tracker",
-    crumbs: ["Dashboard", "Staff", "Training"],
+    crumbs: ["Overview", "Staff operations", "Training"],
     subtitle: "Required trainings and certification due dates.",
   },
   "/settings": {
     title: "Settings",
-    crumbs: ["Dashboard", "Settings"],
+    crumbs: ["Overview", "Admin", "Settings"],
     subtitle: "Organization, renewals, checklists, gates, and integrations.",
   },
 };

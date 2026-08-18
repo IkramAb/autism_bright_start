@@ -4,13 +4,18 @@ import { getOnboardingListData } from "@/lib/staff";
 import { getPipelineData, type CardView } from "@/lib/pipeline";
 import { createClient } from "@/lib/supabase/server";
 
+/** Single source of truth for a stat card's colour — no string sniffing. */
+export type StatTone = "blue" | "teal" | "amber" | "coral" | "neutral";
+
 export type DashboardStat = {
   label: string;
   value: string;
   sub: string;
-  subColor: string;
+  /** Drives the icon tile tint AND the mini-bar fill via `.stat-tone-*`. */
+  tone: StatTone;
+  /** Tabler icon suffix, e.g. "users" → <i className="ti ti-users" /> */
+  icon: string;
   barPct: number;
-  barColor: string;
   href?: string;
 };
 
@@ -201,19 +206,19 @@ export async function getDashboardData(): Promise<DashboardData> {
       label: "Active clients",
       value: String(clients.counts.active),
       sub: `${clients.counts.onboarding} in onboarding`,
-      subColor: "var(--color-teal)",
+      tone: "teal",
+      icon: "users",
       barPct: clients.counts.all ? Math.round((clients.counts.active / clients.counts.all) * 100) : 0,
-      barColor: "var(--color-blue)",
     },
     {
       label: "In pipeline",
       value: String(pipeline.totalInProgress),
       sub: pipeline.needAction > 0 ? `${pipeline.needAction} need action ↗` : "All on track",
-      subColor: pipeline.needAction > 0 ? "var(--color-amber-dark)" : "var(--color-teal)",
+      tone: pipeline.needAction > 0 ? "amber" : "teal",
+      icon: "git-merge",
       barPct: pipeline.totalInProgress
         ? Math.min(100, Math.round((pipeline.needAction / pipeline.totalInProgress) * 100) + 20)
         : 0,
-      barColor: "var(--color-amber)",
       href: "/pipeline",
     },
     {
@@ -223,11 +228,11 @@ export async function getDashboardData(): Promise<DashboardData> {
         expiringThisWeek > 0
           ? `${expiringThisWeek} expiring or overdue ↗`
           : "Nothing urgent",
-      subColor: expiringCount > 0 ? "var(--color-coral)" : "var(--color-teal)",
+      tone: expiringCount > 0 ? "coral" : "neutral",
+      icon: "file-alert",
       barPct: docs.filterCounts.all
         ? Math.min(100, Math.round((expiringCount / docs.filterCounts.all) * 100) + 10)
         : 0,
-      barColor: "var(--color-coral)",
       href: "/documents",
     },
     {
@@ -242,12 +247,16 @@ export async function getDashboardData(): Promise<DashboardData> {
           : caseNotes.todayExpected > 0
             ? "All confirmed"
             : "No sessions scheduled",
-      subColor:
-        caseNotes.todayMissing > 0 ? "var(--color-coral)" : "var(--color-teal)",
+      tone:
+        caseNotes.todayMissing > 0
+          ? "coral"
+          : caseNotes.todayExpected > 0
+            ? "teal"
+            : "neutral",
+      icon: "writing",
       barPct: caseNotes.todayExpected
         ? Math.round((caseNotes.todayConfirmed / caseNotes.todayExpected) * 100)
         : 0,
-      barColor: "var(--color-teal)",
       href: "/case-notes",
     },
   ];

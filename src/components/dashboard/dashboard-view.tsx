@@ -40,27 +40,6 @@ function statusPillClass(raw: string, label = ""): string {
   return "pill-gray";
 }
 
-function trendColor(stat: DashboardData["stats"][number]): string {
-  const sub = stat.sub.toLowerCase();
-  if (
-    sub.includes("no session") ||
-    sub.includes("nothing urgent") ||
-    (sub.includes("no ") && sub.includes("scheduled"))
-  ) {
-    return "#9498A3";
-  }
-  if (stat.subColor.includes("coral") || sub.includes("overdue") || sub.includes("missing")) {
-    return "#E0524B";
-  }
-  if (stat.subColor.includes("amber") || sub.includes("need action")) {
-    return "#EF9F27";
-  }
-  if (stat.subColor.includes("teal") || stat.subColor.includes("green")) {
-    return "#1A9A6E";
-  }
-  return "#9498A3";
-}
-
 function caseBarColor(day: DashboardData["caseNoteDays"][number]): string {
   // Future / unscheduled
   if (day.countLabel === "—" || day.expected === 0) return "#E6E8EC";
@@ -88,13 +67,12 @@ export function DashboardView({ data }: { data: DashboardData }) {
       />
       <div className="stat-row">
         {data.stats.map((stat) => {
-          const trend = trendColor(stat);
           const inner = (
             <>
               <div className="stat-card-hd">
                 <span className="stat-lbl">{stat.label}</span>
-                <span className="stat-badge" style={{ color: trend, borderColor: `${trend}44` }}>
-                  {stat.sub}
+                <span className="stat-tile" aria-hidden="true">
+                  <i className={`ti ti-${stat.icon}`} />
                 </span>
               </div>
               <div className="stat-val">
@@ -104,31 +82,24 @@ export function DashboardView({ data }: { data: DashboardData }) {
                 )}
               </div>
               <div className="stat-card-ft">
-                <div className="stat-change" style={{ color: trend }}>
-                  {stat.sub}
-                </div>
+                <div className="stat-change">{stat.sub}</div>
                 <div className="mini-bar">
-                  <div
-                    className="mini-fill"
-                    style={{
-                      width: `${stat.barPct}%`,
-                      background: trend === "#9498A3" ? "var(--color-line)" : trend,
-                    }}
-                  />
+                  <div className="mini-fill" style={{ width: `${stat.barPct}%` }} />
                 </div>
               </div>
             </>
           );
 
+          const cardClass = `stat-card stat-tone-${stat.tone}`;
           if (stat.href) {
             return (
-              <Link key={stat.label} href={stat.href} className="stat-card stat-card-link">
+              <Link key={stat.label} href={stat.href} className={`${cardClass} stat-card-link`}>
                 {inner}
               </Link>
             );
           }
           return (
-            <div key={stat.label} className="stat-card">
+            <div key={stat.label} className={cardClass}>
               {inner}
             </div>
           );
