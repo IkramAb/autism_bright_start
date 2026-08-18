@@ -235,6 +235,7 @@ export async function getDashboardData(): Promise<DashboardData> {
       tone: "teal",
       icon: "users",
       barPct: clients.counts.all ? Math.round((clients.counts.active / clients.counts.all) * 100) : 0,
+      href: "/clients",
     },
     {
       label: "Active staff",

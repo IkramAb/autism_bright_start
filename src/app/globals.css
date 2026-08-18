@@ -1825,8 +1825,9 @@ body {
   }
   .stat-row {
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 16px;
+    /* minmax(0,…) so a long label wraps instead of blowing the track out */
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 12px;
   }
   /* .cn-stat-row is always applied *with* .stat-row and never sets `display`,
      so the grid comes from .stat-row — which is now 5-col too. Only the margin
@@ -1838,7 +1839,7 @@ body {
     display: flex;
     flex-direction: column;
     gap: 8px;
-    padding: 18px 18px 16px;
+    padding: 16px 16px 14px;
     background: var(--card);
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
   }
@@ -1846,18 +1847,18 @@ body {
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
-    gap: 12px;
+    gap: 10px;
   }
   /* Deliberately not `.stat-icon`, which the case-notes compliance tab renders
      at 24px inside a `.stat-icon-row`. */
   .stat-tile {
-    width: 36px;
-    height: 36px;
-    border-radius: 10px;
+    width: 32px;
+    height: 32px;
+    border-radius: 9px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 18px;
+    font-size: 16px;
     flex-shrink: 0;
   }
   .stat-card-ft {
@@ -1893,6 +1894,7 @@ body {
     letter-spacing: 0;
     text-transform: none;
     line-height: 1.3;
+    min-width: 0; /* let long labels wrap rather than push the tile out */
   }
   .stat-val {
     font-size: 1.75rem;
@@ -1953,31 +1955,35 @@ body {
   .stat-tone-neutral .mini-fill {
     background: var(--color-line);
   }
+  /* Hover lives on the link variant, not .stat-card — the compliance tab's cards
+     use the same surface but aren't clickable, and shouldn't look like they are. */
   .stat-card-link {
     text-decoration: none;
     color: inherit;
     cursor: pointer;
     transition: border-color 0.12s, box-shadow 0.12s;
   }
-  .stat-card-link:hover {
+  .stat-card-link:hover,
+  .stat-card-link:focus-visible {
     border-color: var(--color-blue);
     box-shadow: 0 2px 12px rgba(88, 137, 224, 0.12);
   }
-  /* Five cards need ~1600px to keep labels on one line; 3+2 below that reads
-     better than 4+1, which leaves an orphan. */
-  @media (max-width: 1600px) {
+  /* Stay on one row as far down as the cards stay readable — a label wrapping to
+     two lines is a better trade than splitting the row. Below 1200 there isn't
+     room, and 3+2 beats 4+1, which leaves an orphan. */
+  @media (max-width: 1200px) {
     .stat-row {
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(3, minmax(0, 1fr));
     }
   }
-  @media (max-width: 1100px) {
+  @media (max-width: 900px) {
     .stat-row {
-      grid-template-columns: repeat(2, 1fr);
+      grid-template-columns: repeat(2, minmax(0, 1fr));
     }
   }
   @media (max-width: 640px) {
     .stat-row {
-      grid-template-columns: 1fr;
+      grid-template-columns: minmax(0, 1fr);
     }
   }
   .card-hd {
