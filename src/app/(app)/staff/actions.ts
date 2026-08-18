@@ -4,34 +4,11 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentAdmin } from "@/lib/auth";
 import type { Database } from "@/lib/supabase/types";
+import { provisionOnboarding, type ProvisionCounts } from "@/lib/staff-provisioning";
 
 export type ActionResult = { ok: boolean; error?: string; message?: string };
 
-const DEFAULT_TRAININGS = [
-  "RBT 40-hour training",
-  "EIDBI 101",
-  "Cultural Responsiveness in ASD Services",
-  "Vulnerable adults training",
-  "Mandated reporter training",
-  "ADS strategy training",
-  "Company orientation",
-];
-
-const BG_STEPS = [
-  { step: "step1_application", sort: 1 },
-  { step: "step2_fingerprinting", sort: 2 },
-  { step: "step3_approval", sort: 3 },
-  { step: "study_number", sort: 4 },
-] as const;
-
-const DEFAULT_STAFF_DOCS = [
-  "Signed offer letter",
-  "I-9 employment verification",
-  "W-4 tax form",
-  "RBT 40hr training cert",
-  "DHS provider enrollment form",
-  "Background check documents",
-];
+type StaffStatus = Database["public"]["Enums"]["staff_status"];
 
 export async function toggleChecklistItem(itemId: string, done: boolean): Promise<ActionResult> {
   const admin = await getCurrentAdmin();
@@ -108,6 +85,11 @@ export async function addEmployee(formData: FormData): Promise<ActionResult> {
   const email = String(formData.get("email") ?? "").trim() || null;
   const hiredOn = String(formData.get("hired_on") ?? "") || new Date().toISOString().slice(0, 10);
 
+  // Whitelist rather than cast — an unrecognised value would fail the enum at the
+  // DB with an opaque error. The other three statuses stay in the Edit modal.
+  const status: StaffStatus =
+    String(formData.get("status") ?? "active") === "onboarding" ? "onboarding" : "active";
+
   if (!fullName) return { ok: false, error: "Enter a full name." };
 
   const initials = fullName
@@ -127,7 +109,7 @@ export async function addEmployee(formData: FormData): Promise<ActionResult> {
       role_type: roleType,
       email,
       hired_on: hiredOn,
-      status: "onboarding",
+      status,
       avatar_initials: initials,
       avatar_bg: "blue-light",
       avatar_color: "blue-dark",
@@ -139,48 +121,21 @@ export async function addEmployee(formData: FormData): Promise<ActionResult> {
 
   const staffId = inserted.id as string;
 
-  const { data: template } = await supabase.from("staff_checklist_template").select("*").order("sort_order");
-  if (template?.length) {
-    await supabase.from("staff_onboarding_items").insert(
-      template.map((t) => ({
-        staff_id: staffId,
-        template_item_id: t.id,
-        label: t.name,
-        checklist_group: t.checklist_group,
-        sort_order: t.sort_order,
-        due_on:
-          t.default_due_offset_days && hiredOn
-            ? offsetDate(hiredOn, t.default_due_offset_days)
-            : null,
-      })),
-    );
+  // Existing employees are just records — the checklist, trainings, background
+  // steps and HR documents only exist for people actually being onboarded.
+  let counts: ProvisionCounts | null = null;
+  if (status === "onboarding") {
+    const res = await provisionOnboarding(supabase, staffId, hiredOn);
+    if (!res.ok) {
+      // The staff row is already committed, so this is a partial success.
+      revalidateStaff(staffId);
+      return {
+        ok: true,
+        message: `${fullName} added, but the onboarding checklist could not be created: ${res.error}`,
+      };
+    }
+    counts = res.counts;
   }
-
-  await supabase.from("staff_trainings").insert(
-    DEFAULT_TRAININGS.map((name) => ({
-      staff_id: staffId,
-      name,
-      status: "pending" as const,
-      due_on: name === "RBT 40-hour training" ? offsetDate(hiredOn, 60) : null,
-    })),
-  );
-
-  await supabase.from("staff_background_checks").insert(
-    BG_STEPS.map((s) => ({
-      staff_id: staffId,
-      step: s.step,
-      sort_order: s.sort,
-      status: s.step === "study_number" ? ("not_assigned" as const) : ("pending" as const),
-    })),
-  );
-
-  await supabase.from("staff_documents").insert(
-    DEFAULT_STAFF_DOCS.map((name) => ({
-      staff_id: staffId,
-      name,
-      status: "missing" as const,
-    })),
-  );
 
   await supabase
     .from("staff")
@@ -190,8 +145,48 @@ export async function addEmployee(formData: FormData): Promise<ActionResult> {
     .eq("id", staffId);
 
   revalidateStaff(staffId);
-  revalidatePath("/training");
-  return { ok: true, message: `${fullName} added to staff.` };
+  return {
+    ok: true,
+    message: counts
+      ? `${fullName} added — ${counts.checklist} checklist items, ${counts.trainings} trainings, and ${counts.documents} HR documents created.`
+      : `${fullName} added to the staff directory.`,
+  };
+}
+
+/**
+ * Provisions the onboarding checklist for someone who was added as existing
+ * staff, so an Active hire isn't permanently un-trackable. Also moves them onto
+ * the onboarding board — `getOnboardingListData()` filters on status, so without
+ * the flip the checklist would exist but never surface anywhere.
+ */
+export async function setUpOnboarding(staffId: string): Promise<ActionResult> {
+  const admin = await getCurrentAdmin();
+  if (!admin) return { ok: false, error: "Not authorized." };
+
+  const supabase = await createClient();
+  const { data: staff } = await supabase
+    .from("staff")
+    .select("id, full_name, hired_on, status")
+    .eq("id", staffId)
+    .maybeSingle();
+  if (!staff) return { ok: false, error: "Staff member not found." };
+
+  const res = await provisionOnboarding(
+    supabase,
+    staffId,
+    staff.hired_on ?? new Date().toISOString().slice(0, 10),
+  );
+  if (!res.ok) return { ok: false, error: res.error };
+
+  if (staff.status === "active") {
+    await supabase.from("staff").update({ status: "onboarding" }).eq("id", staffId);
+  }
+
+  revalidateStaff(staffId);
+  return {
+    ok: true,
+    message: `Onboarding set up — ${res.counts.checklist} checklist items, ${res.counts.trainings} trainings, and ${res.counts.documents} HR documents.`,
+  };
 }
 
 export async function updateStaff(staffId: string, formData: FormData): Promise<ActionResult> {
@@ -252,12 +247,6 @@ export async function deleteStaff(staffId: string): Promise<ActionResult> {
 
   revalidateStaff(staffId);
   return { ok: true, message: "Staff member removed." };
-}
-
-function offsetDate(isoDate: string, days: number): string {
-  const d = new Date(isoDate + "T00:00:00");
-  d.setDate(d.getDate() + days);
-  return d.toISOString().slice(0, 10);
 }
 
 function revalidateStaff(staffId?: string) {

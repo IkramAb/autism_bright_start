@@ -1,5 +1,6 @@
 import { getCaseNotesData } from "@/lib/case-notes";
 import { CaseNotesView } from "@/components/case-notes/case-notes-view";
+import { NoWeeksView } from "@/components/case-notes/no-weeks-view";
 
 export const dynamic = "force-dynamic";
 
@@ -11,15 +12,7 @@ export default async function CaseNotesPage({
   const params = await searchParams;
   const data = await getCaseNotesData(params.week);
 
-  if (!data) {
-    return (
-      <div className="page-stack">
-        <div className="full-card">
-          <p className="page-meta">No compliance weeks found. Run database seed to load the Jun 15–19, 2026 week.</p>
-        </div>
-      </div>
-    );
-  }
+  if (!data) return <NoWeeksView />;
 
   return <CaseNotesView data={data} />;
 }

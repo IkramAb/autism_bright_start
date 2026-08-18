@@ -77,8 +77,8 @@ export function DashboardView({ data }: { data: DashboardData }) {
               </div>
               <div className="stat-val">
                 {stat.value}
-                {stat.label === "Case notes today" && data.todayExpected > 0 && (
-                  <span className="stat-val-suffix">/{data.todayExpected}</span>
+                {stat.valueSuffix && (
+                  <span className="stat-val-suffix">{stat.valueSuffix}</span>
                 )}
               </div>
               <div className="stat-card-ft">

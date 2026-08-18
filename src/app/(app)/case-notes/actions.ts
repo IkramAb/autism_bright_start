@@ -8,6 +8,10 @@ import {
   type OverrideReason,
   type SessionPeriod,
   type ScheduleStatus,
+  addDaysIso,
+  daysBetweenIso,
+  isMondayIso,
+  weekEndFor,
 } from "@/lib/case-notes-shared";
 import { getCaseNotesData } from "@/lib/case-notes";
 import type { Database } from "@/lib/supabase/types";
@@ -20,11 +24,14 @@ function revalidateCaseNotes() {
   revalidatePath("/case-notes");
 }
 
-export async function ensureCheckoffsForWeek(weekId: string): Promise<ActionResult> {
-  const admin = await getCurrentAdmin();
-  if (!admin) return { ok: false, error: "Not authorized." };
+type Supa = Awaited<ReturnType<typeof createClient>>;
 
-  const supabase = await createClient();
+/**
+ * Materializes the week's check-off slots from its schedule assignments. Takes
+ * the client so callers that already authenticated don't pay for a second
+ * getCurrentAdmin() (an auth.getUser() plus an admin_users query).
+ */
+async function materializeCheckoffs(supabase: Supa, weekId: string): Promise<ActionResult> {
   const [{ data: assignments }, { data: existing }] = await Promise.all([
     supabase.from("bt_schedule_assignments").select("*").eq("week_id", weekId),
     supabase
@@ -92,6 +99,188 @@ export async function ensureCheckoffsForWeek(weekId: string): Promise<ActionResu
   );
 
   return { ok: true };
+}
+
+/** Rebuilds the week's check-off slots from its schedule — repairs drift. */
+export async function ensureCheckoffsForWeek(weekId: string): Promise<ActionResult> {
+  const admin = await getCurrentAdmin();
+  if (!admin) return { ok: false, error: "Not authorized." };
+
+  const supabase = await createClient();
+  const result = await materializeCheckoffs(supabase, weekId);
+  if (result.ok) revalidateCaseNotes();
+  return result;
+}
+
+export type CreateWeekResult = ActionResult & { weekId?: string };
+
+function weekRangeLabel(weekStart: string): string {
+  const fmt = (iso: string) =>
+    new Date(iso + "T00:00:00Z").toLocaleDateString("en-US", {
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+      timeZone: "UTC",
+    });
+  return `${fmt(weekStart)} – ${fmt(weekEndFor(weekStart))}`;
+}
+
+/**
+ * Creates a compliance week and, optionally, carries the recurring schedule
+ * forward from an earlier week — then materializes the check-off slots so the
+ * Catalyst export can be uploaded against it straight away.
+ */
+export async function createComplianceWeek(input: {
+  /** ISO "YYYY-MM-DD"; must be a Monday. */
+  weekStart: string;
+  /** Week to copy the schedule from. Null/empty starts with an empty schedule. */
+  copyFromWeekId?: string | null;
+}): Promise<CreateWeekResult> {
+  const admin = await getCurrentAdmin();
+  if (!admin) return { ok: false, error: "Not authorized." };
+
+  const { weekStart } = input;
+  if (!isMondayIso(weekStart)) {
+    return {
+      ok: false,
+      error: "Weeks run Monday to Friday — pick the Monday of the week you want to track.",
+    };
+  }
+
+  const supabase = await createClient();
+
+  const { data: created, error: insertError } = await supabase
+    .from("compliance_weeks")
+    .insert({ week_start: weekStart, week_end: weekEndFor(weekStart), status: "open" })
+    .select("id")
+    .single();
+
+  if (insertError || !created) {
+    const duplicate =
+      insertError?.code === "23505" || /duplicate key/i.test(insertError?.message ?? "");
+    return {
+      ok: false,
+      error: duplicate
+        ? `A week starting ${weekRangeLabel(weekStart).split(" – ")[0]} already exists — pick it from the week selector instead.`
+        : (insertError?.message ?? "Could not create the week."),
+    };
+  }
+
+  const weekId = created.id as string;
+  let copied = 0;
+
+  if (input.copyFromWeekId) {
+    const { data: source } = await supabase
+      .from("compliance_weeks")
+      .select("id, week_start")
+      .eq("id", input.copyFromWeekId)
+      .maybeSingle();
+
+    if (source) {
+      // Shift by the real delta, not a hardcoded +7 — skipping a holiday week
+      // must still land sessions on the matching weekdays.
+      const shift = daysBetweenIso(String(source.week_start), weekStart);
+
+      const { data: assignments } = await supabase
+        .from("bt_schedule_assignments")
+        .select("client_id, session_date, session_period, assigned_staff_id, status")
+        .eq("week_id", input.copyFromWeekId);
+
+      if (assignments?.length) {
+        const clientIds = [...new Set(assignments.map((a) => a.client_id))];
+        const { data: clientRows } = await supabase
+          .from("clients")
+          .select("id, status")
+          .in("id", clientIds);
+        const inactive = new Set(
+          (clientRows ?? []).filter((c) => c.status === "inactive").map((c) => c.id),
+        );
+
+        const rows = assignments
+          .filter((a) => !inactive.has(a.client_id))
+          .map((a) => ({
+            week_id: weekId,
+            client_id: a.client_id,
+            session_date: addDaysIso(String(a.session_date), shift),
+            session_period: a.session_period,
+            assigned_staff_id: a.assigned_staff_id,
+            // "covering" is a one-week exception; carrying it forward would
+            // permanently mislabel the base schedule.
+            status: a.status === "covering" ? ("assigned" as const) : a.status,
+            covering_for_staff_id: null,
+            updated_by: admin.id,
+          }));
+
+        if (rows.length) {
+          const { error } = await supabase.from("bt_schedule_assignments").insert(rows);
+          if (error) return { ok: false, error: error.message, weekId };
+          copied = rows.length;
+        }
+      }
+    }
+  }
+
+  const materialized = await materializeCheckoffs(supabase, weekId);
+  if (!materialized.ok) return { ok: false, error: materialized.error, weekId };
+
+  revalidateCaseNotes();
+  revalidatePath("/dashboard");
+
+  return {
+    ok: true,
+    weekId,
+    message: copied
+      ? `Week of ${weekRangeLabel(weekStart)} created — ${copied} sessions carried forward.`
+      : `Week of ${weekRangeLabel(weekStart)} created — no schedule to carry forward. Build it in the Weekly schedule tab.`,
+  };
+}
+
+/**
+ * Opens or finalizes a week. Finalizing never blocks on unresolved notes — a
+ * week with missing notes is exactly the one you want to close out and report
+ * on. Its purpose is retiring a week that should stop driving the dashboard.
+ */
+export async function setWeekStatus(
+  weekId: string,
+  status: "open" | "finalized",
+): Promise<ActionResult> {
+  const admin = await getCurrentAdmin();
+  if (!admin) return { ok: false, error: "Not authorized." };
+  if (status !== "open" && status !== "finalized") {
+    return { ok: false, error: "Invalid week status." };
+  }
+
+  const supabase = await createClient();
+
+  let unresolved = 0;
+  if (status === "finalized") {
+    const { data } = await supabase
+      .from("case_note_checkoffs")
+      .select("status")
+      .eq("week_id", weekId);
+    unresolved = (data ?? []).filter(
+      (r) => r.status === "missing" || r.status === "pending",
+    ).length;
+  }
+
+  const { error } = await supabase
+    .from("compliance_weeks")
+    .update({ status })
+    .eq("id", weekId);
+  if (error) return { ok: false, error: error.message };
+
+  revalidateCaseNotes();
+  revalidatePath("/dashboard");
+
+  return {
+    ok: true,
+    message:
+      status === "open"
+        ? "Week reopened."
+        : unresolved > 0
+          ? `Week finalized — ${unresolved} notes still unresolved.`
+          : "Week finalized.",
+  };
 }
 
 export async function reassignSession(input: {

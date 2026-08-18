@@ -511,11 +511,12 @@ body {
     overflow: hidden;
     text-overflow: ellipsis;
   }
+  /* Tagline, not an eyebrow label — title case keeps the periods tight to their
+     words, so no uppercase here. */
   .sidebar-wordmark-sub {
-    font-size: 9.5px;
-    font-weight: 600;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.01em;
     color: var(--sidebar-faint);
   }
   /* Used by the login screen's no-logo fallback — keep light. */
@@ -1824,17 +1825,14 @@ body {
   }
   .stat-row {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(5, 1fr);
     gap: 16px;
   }
+  /* .cn-stat-row is always applied *with* .stat-row and never sets `display`,
+     so the grid comes from .stat-row — which is now 5-col too. Only the margin
+     is still its own. */
   .cn-stat-row {
-    grid-template-columns: repeat(5, 1fr);
     margin-bottom: 14px;
-  }
-  @media (max-width: 1100px) {
-    .cn-stat-row {
-      grid-template-columns: repeat(2, 1fr);
-    }
   }
   .stat-card {
     display: flex;
@@ -1965,7 +1963,14 @@ body {
     border-color: var(--color-blue);
     box-shadow: 0 2px 12px rgba(88, 137, 224, 0.12);
   }
-  @media (max-width: 1280px) {
+  /* Five cards need ~1600px to keep labels on one line; 3+2 below that reads
+     better than 4+1, which leaves an orphan. */
+  @media (max-width: 1600px) {
+    .stat-row {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+  @media (max-width: 1100px) {
     .stat-row {
       grid-template-columns: repeat(2, 1fr);
     }

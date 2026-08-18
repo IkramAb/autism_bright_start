@@ -10,6 +10,8 @@ export type StatTone = "blue" | "teal" | "amber" | "coral" | "neutral";
 export type DashboardStat = {
   label: string;
   value: string;
+  /** Rendered muted after `value`, e.g. "/12". Omit when there is no denominator. */
+  valueSuffix?: string;
   sub: string;
   /** Drives the icon tile tint AND the mini-bar fill via `.stat-tone-*`. */
   tone: StatTone;
@@ -69,7 +71,6 @@ export type DashboardData = {
   docAlerts: DocAlert[];
   staffOnboarding: StaffOnboardingSummary;
   caseNoteDays: CaseNoteDay[];
-  todayExpected: number;
   missingCaseNoteSummary: string | null;
 };
 
@@ -88,11 +89,34 @@ function pillForCard(card: CardView): { label: string; className: string } {
   return { label: "On track", className: "pill-green" };
 }
 
+/**
+ * Roster counts for the "Active staff" card. `getOnboardingListData()` only
+ * selects onboarding staff, so the active count is not derivable from anything
+ * the dashboard already loads — but a single-column select is cheap, and this
+ * runs inside the existing Promise.all so it adds no latency.
+ */
+async function loadStaffCounts(): Promise<{
+  active: number;
+  onboarding: number;
+  total: number;
+}> {
+  const supabase = await createClient();
+  const { data } = await supabase.from("staff").select("status");
+  const rows = data ?? [];
+  return {
+    active: rows.filter((r) => r.status === "active" || r.status === "fully_onboarded").length,
+    // Mirrors getOnboardingListData()'s filter so this number equals the card
+    // count on /onboarding.
+    onboarding: rows.filter((r) => r.status === "onboarding" || r.status === "needs_action").length,
+    total: rows.length,
+  };
+}
+
 async function loadCaseNoteWeek(): Promise<{
   days: CaseNoteDay[];
-  todayConfirmed: number;
-  todayExpected: number;
-  todayMissing: number;
+  weekConfirmed: number;
+  weekExpected: number;
+  weekMissing: number;
   missingSummary: string | null;
 }> {
   const supabase = await createClient();
@@ -107,7 +131,7 @@ async function loadCaseNoteWeek(): Promise<{
     .maybeSingle();
 
   if (!week) {
-    return { days: [], todayConfirmed: 0, todayExpected: 0, todayMissing: 0, missingSummary: null };
+    return { days: [], weekConfirmed: 0, weekExpected: 0, weekMissing: 0, missingSummary: null };
   }
 
   const { data: checkoffs } = await supabase
@@ -155,14 +179,15 @@ async function loadCaseNoteWeek(): Promise<{
     };
   });
 
-  const todayRows = rows.filter(
-    (r) => r.session_date === today && r.status !== "not_applicable",
-  );
-  const todayExpected = todayRows.length;
-  const todayConfirmed = todayRows.filter(
-    (r) => r.status === "confirmed" || r.status === "overridden",
+  // Whole-week totals for the denominator...
+  const weekExpected = days.reduce((n, d) => n + d.expected, 0);
+  const weekConfirmed = days.reduce((n, d) => n + d.confirmed, 0);
+  // ...but only sessions that have already happened can be *missing*. Deriving
+  // this as expected − confirmed would flag Friday's notes as late on Monday.
+  const weekMissing = rows.filter(
+    (r) =>
+      r.session_date <= today && (r.status === "missing" || r.status === "pending"),
   ).length;
-  const todayMissing = todayRows.filter((r) => r.status === "missing" || r.status === "pending").length;
 
   const missingStaff = new Set<string>();
   for (const r of rows) {
@@ -174,9 +199,9 @@ async function loadCaseNoteWeek(): Promise<{
 
   return {
     days,
-    todayConfirmed,
-    todayExpected,
-    todayMissing,
+    weekConfirmed,
+    weekExpected,
+    weekMissing,
     missingSummary:
       missingStaff.size > 0
         ? `Missing notes for: ${[...missingStaff].slice(0, 5).join(", ")}`
@@ -185,12 +210,13 @@ async function loadCaseNoteWeek(): Promise<{
 }
 
 export async function getDashboardData(): Promise<DashboardData> {
-  const [clients, pipeline, docs, onboarding, caseNotes] = await Promise.all([
+  const [clients, pipeline, docs, onboarding, caseNotes, staffCounts] = await Promise.all([
     getClientListData(),
     getPipelineData(),
     getDocumentTrackerData(),
     getOnboardingListData(),
     loadCaseNoteWeek(),
+    loadStaffCounts(),
   ]);
 
   const expiringCount = docs.filterCounts.expiring + docs.filterCounts.overdue;
@@ -211,7 +237,21 @@ export async function getDashboardData(): Promise<DashboardData> {
       barPct: clients.counts.all ? Math.round((clients.counts.active / clients.counts.all) * 100) : 0,
     },
     {
-      label: "In pipeline",
+      label: "Active staff",
+      value: String(staffCounts.active),
+      sub:
+        staffCounts.onboarding > 0
+          ? `${staffCounts.onboarding} in onboarding ↗`
+          : "Full roster on the floor",
+      tone: "blue",
+      icon: "id-badge",
+      barPct: staffCounts.total
+        ? Math.round((staffCounts.active / staffCounts.total) * 100)
+        : 0,
+      href: "/staff",
+    },
+    {
+      label: "Onboarding pulse",
       value: String(pipeline.totalInProgress),
       sub: pipeline.needAction > 0 ? `${pipeline.needAction} need action ↗` : "All on track",
       tone: pipeline.needAction > 0 ? "amber" : "teal",
@@ -222,7 +262,7 @@ export async function getDashboardData(): Promise<DashboardData> {
       href: "/pipeline",
     },
     {
-      label: "Docs expiring",
+      label: "Document attention",
       value: String(expiringCount),
       sub:
         expiringThisWeek > 0
@@ -236,26 +276,24 @@ export async function getDashboardData(): Promise<DashboardData> {
       href: "/documents",
     },
     {
-      label: "Case notes today",
-      value:
-        caseNotes.todayExpected > 0
-          ? `${caseNotes.todayConfirmed}`
-          : "0",
+      label: "Notes this week",
+      value: String(caseNotes.weekConfirmed),
+      valueSuffix: caseNotes.weekExpected > 0 ? `/${caseNotes.weekExpected}` : undefined,
       sub:
-        caseNotes.todayMissing > 0
-          ? `${caseNotes.todayMissing} missing ↗`
-          : caseNotes.todayExpected > 0
-            ? "All confirmed"
+        caseNotes.weekMissing > 0
+          ? `${caseNotes.weekMissing} missing ↗`
+          : caseNotes.weekExpected > 0
+            ? "All caught up"
             : "No sessions scheduled",
       tone:
-        caseNotes.todayMissing > 0
+        caseNotes.weekMissing > 0
           ? "coral"
-          : caseNotes.todayExpected > 0
+          : caseNotes.weekExpected > 0
             ? "teal"
             : "neutral",
       icon: "writing",
-      barPct: caseNotes.todayExpected
-        ? Math.round((caseNotes.todayConfirmed / caseNotes.todayExpected) * 100)
+      barPct: caseNotes.weekExpected
+        ? Math.round((caseNotes.weekConfirmed / caseNotes.weekExpected) * 100)
         : 0,
       href: "/case-notes",
     },
@@ -355,7 +393,6 @@ export async function getDashboardData(): Promise<DashboardData> {
     docAlerts: docAlerts.slice(0, 5),
     staffOnboarding,
     caseNoteDays: caseNotes.days,
-    todayExpected: caseNotes.todayExpected,
     missingCaseNoteSummary: caseNotes.missingSummary,
   };
 }

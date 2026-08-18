@@ -19,6 +19,12 @@ export function ScheduleTab({ data }: { data: CaseNotesData }) {
   const dateOptions = data.schedule.find((r) => r.clientId === clientId)?.days ?? [];
 
   function submitReassign() {
+    // A brand-new week has no schedule rows, so the selects seed empty — without
+    // this the insert goes out with clientId "" and fails on a UUID cast.
+    if (!clientId || !sessionDate) {
+      setMessage("Pick a client and date first.");
+      return;
+    }
     startTransition(async () => {
       const status = !staffId
         ? "unassigned"

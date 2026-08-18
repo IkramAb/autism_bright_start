@@ -3,7 +3,7 @@
 import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import type { StaffDetail } from "@/lib/staff";
-import { toggleChecklistItem, updateStaffNotes, fetchStaffDetail, uploadStaffDocument, deleteStaff } from "@/app/(app)/staff/actions";
+import { toggleChecklistItem, updateStaffNotes, fetchStaffDetail, uploadStaffDocument, deleteStaff, setUpOnboarding } from "@/app/(app)/staff/actions";
 import { BG_STEP_LABELS, bgStatusPill, trainingStatusPill, fmtDate } from "@/lib/staff-utils";
 import { EditStaffModal } from "./edit-staff-modal";
 
@@ -65,6 +65,21 @@ export function StaffDetailPanel({
   function uploadDoc(docId: string) {
     startTransition(async () => {
       await uploadStaffDocument(docId);
+      await reload();
+    });
+  }
+
+  function runSetUpOnboarding() {
+    const confirmed = window.confirm(
+      `Set up the onboarding checklist for ${staff.fullName}? This creates the checklist, trainings, background-check steps, and HR document placeholders, and moves them to Onboarding status.`,
+    );
+    if (!confirmed) return;
+    startTransition(async () => {
+      const res = await setUpOnboarding(staff.id);
+      if (!res.ok) {
+        showLockReason(res.error ?? "Could not set up onboarding.");
+        return;
+      }
       await reload();
     });
   }
@@ -175,7 +190,33 @@ export function StaffDetailPanel({
             </div>
           )}
 
-          {tab === "onboarding" && (
+          {tab === "onboarding" && staff.checklistGroups.length === 0 && (
+            <div className="full-card" style={{ textAlign: "center", padding: 24 }}>
+              <i
+                className="ti ti-checklist"
+                style={{ fontSize: 24, color: "var(--color-ink3)" }}
+                aria-hidden="true"
+              />
+              <div style={{ fontSize: 13, fontWeight: 600, marginTop: 8 }}>
+                No onboarding checklist
+              </div>
+              <p style={{ fontSize: 12, color: "var(--color-ink3)", margin: "6px auto 14px", maxWidth: 340 }}>
+                This employee was added as existing staff, so no checklist, trainings, or HR
+                document placeholders were created.
+              </p>
+              <button
+                type="button"
+                className="btn btn-primary"
+                disabled={pending}
+                onClick={runSetUpOnboarding}
+              >
+                <i className="ti ti-plus" style={{ fontSize: 13 }} aria-hidden="true" /> Set up
+                onboarding checklist
+              </button>
+            </div>
+          )}
+
+          {tab === "onboarding" && staff.checklistGroups.length > 0 && (
             <div className="full-card">
               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 10 }}>
                 <span className="section-title" style={{ margin: 0 }}>Onboarding checklist</span>
@@ -231,7 +272,15 @@ export function StaffDetailPanel({
             </div>
           )}
 
-          {tab === "trainings" && (
+          {tab === "trainings" && staff.trainings.length === 0 && (
+            <div className="full-card">
+              <p style={{ fontSize: 12, color: "var(--color-ink3)" }}>
+                No trainings assigned yet.
+              </p>
+            </div>
+          )}
+
+          {tab === "trainings" && staff.trainings.length > 0 && (
             <div className="full-card" style={{ padding: 0, overflow: "hidden" }}>
               <table className="data-table">
                 <thead><tr><th>Training</th><th>Status</th><th>Due</th><th>Completed</th></tr></thead>
@@ -288,7 +337,15 @@ export function StaffDetailPanel({
             </div>
           )}
 
-          {tab === "background" && (
+          {tab === "background" && staff.backgroundChecks.length === 0 && (
+            <div className="full-card">
+              <p style={{ fontSize: 12, color: "var(--color-ink3)" }}>
+                No background study steps recorded yet.
+              </p>
+            </div>
+          )}
+
+          {tab === "background" && staff.backgroundChecks.length > 0 && (
             <div className="full-card">
               {staff.backgroundChecks.map((b) => {
                 const bp = bgStatusPill(b.status);

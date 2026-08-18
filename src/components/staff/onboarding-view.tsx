@@ -27,7 +27,9 @@ export function OnboardingView({ cards }: { cards: OnboardingCard[] }) {
 
   return (
     <div>
-      {showAdd && <AddEmployeeModal onClose={() => setShowAdd(false)} />}
+      {showAdd && (
+        <AddEmployeeModal defaultStatus="onboarding" onClose={() => setShowAdd(false)} />
+      )}
       <PageHeader
         title={meta.title}
         subtitle={`${cards.length} employees in onboarding · ${meta.subtitle}`}

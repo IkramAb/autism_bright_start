@@ -3,7 +3,8 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import type { CaseNotesData } from "@/lib/case-notes-shared";
-import { sendWeeklyReport } from "@/app/(app)/case-notes/actions";
+import { sendWeeklyReport, setWeekStatus } from "@/app/(app)/case-notes/actions";
+import { NewWeekModal } from "@/components/case-notes/new-week-modal";
 import { ScheduleTab } from "@/components/case-notes/schedule-tab";
 import { CheckoffTab } from "@/components/case-notes/checkoff-tab";
 import { ComplianceTab } from "@/components/case-notes/compliance-tab";
@@ -16,7 +17,11 @@ export function CaseNotesView({ data }: { data: CaseNotesData }) {
   const meta = ROUTE_META["/case-notes"];
   const [tab, setTab] = useState<Tab>("schedule");
   const [pending, startTransition] = useTransition();
+  const [showNewWeek, setShowNewWeek] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
   const router = useRouter();
+
+  const finalized = data.week.status === "finalized";
 
   function onWeekChange(weekId: string) {
     startTransition(() => {
@@ -27,6 +32,30 @@ export function CaseNotesView({ data }: { data: CaseNotesData }) {
   function handleSendReport() {
     startTransition(async () => {
       await sendWeeklyReport(data.week.id);
+    });
+  }
+
+  function handleCreated(weekId: string, message?: string) {
+    setShowNewWeek(false);
+    if (message) setToast(message);
+    startTransition(() => {
+      router.push(`/case-notes?week=${weekId}`);
+    });
+  }
+
+  function toggleFinalize() {
+    const next = finalized ? "open" : "finalized";
+    if (
+      next === "finalized" &&
+      !window.confirm(
+        `Finalize ${data.week.label}? It stops driving the dashboard's weekly numbers. You can reopen it later.`,
+      )
+    ) {
+      return;
+    }
+    startTransition(async () => {
+      const res = await setWeekStatus(data.week.id, next);
+      setToast(res.ok ? (res.message ?? "Week updated.") : (res.error ?? "Could not update the week."));
     });
   }
 
@@ -52,6 +81,29 @@ export function CaseNotesView({ data }: { data: CaseNotesData }) {
               </option>
             ))}
           </select>
+          {finalized && <span className="pill pill-gray">Finalized</span>}
+          <button
+            type="button"
+            className="btn btn-outline"
+            onClick={() => setShowNewWeek(true)}
+            disabled={pending}
+          >
+            <i className="ti ti-calendar-plus" style={{ fontSize: 13 }} aria-hidden="true" /> New
+            week
+          </button>
+          <button
+            type="button"
+            className="btn btn-outline"
+            onClick={toggleFinalize}
+            disabled={pending}
+          >
+            <i
+              className={`ti ti-${finalized ? "lock-open" : "lock"}`}
+              style={{ fontSize: 13 }}
+              aria-hidden="true"
+            />
+            {finalized ? "Reopen week" : "Finalize week"}
+          </button>
           <button
             type="button"
             className="btn btn-primary"
@@ -66,7 +118,21 @@ export function CaseNotesView({ data }: { data: CaseNotesData }) {
         />
       </div>
 
+      {showNewWeek && (
+        <NewWeekModal
+          weeks={data.weeks}
+          onClose={() => setShowNewWeek(false)}
+          onCreated={handleCreated}
+        />
+      )}
+
       <div className="page-body">
+        {toast && (
+          <div className="alert-row alert-row-teal" style={{ marginBottom: 12 }}>
+            <i className="ti ti-check" aria-hidden="true" />
+            <div className="alert-row-body">{toast}</div>
+          </div>
+        )}
         <p className="notice-inline">
           <i className="ti ti-shield-check" aria-hidden="true" />
           No note content is stored here — this only tracks whether a note was submitted in

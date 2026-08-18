@@ -152,3 +152,41 @@ export type CaseNotesData = {
     uploadedAt: string;
   } | null;
 };
+
+/* --- ISO week-date helpers -------------------------------------------------
+   All UTC-based: the existing weekdayDates()/weekLabel() in case-notes.ts parse
+   at local noon, which is fine for display but unsafe for the arithmetic below.
+   --------------------------------------------------------------------------- */
+
+/** Shift an ISO date by whole days. */
+export function addDaysIso(iso: string, days: number): string {
+  const d = new Date(iso + "T00:00:00Z");
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+
+export function isMondayIso(iso: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(iso)) return false;
+  const d = new Date(iso + "T00:00:00Z");
+  return !Number.isNaN(d.getTime()) && d.getUTCDay() === 1;
+}
+
+/** Monday of the ISO week containing `iso` (defaults to today). */
+export function mondayOfIso(iso?: string): string {
+  const base = iso ?? new Date().toISOString().slice(0, 10);
+  const d = new Date(base + "T00:00:00Z");
+  const shift = (d.getUTCDay() + 6) % 7; // Mon→0, Tue→1, … Sun→6
+  return addDaysIso(base, -shift);
+}
+
+/** Friday of the week starting at `weekStart`. */
+export function weekEndFor(weekStart: string): string {
+  return addDaysIso(weekStart, 4);
+}
+
+/** Whole days between two ISO dates (b − a). */
+export function daysBetweenIso(a: string, b: string): number {
+  return Math.round(
+    (Date.parse(b + "T00:00:00Z") - Date.parse(a + "T00:00:00Z")) / 86_400_000,
+  );
+}

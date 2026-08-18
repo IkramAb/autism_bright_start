@@ -16,7 +16,7 @@ export type NavGroup = {
  * client, and the sidebar is a client component.
  */
 export const BRAND_NAME = "Autism Bright Start";
-export const BRAND_TAGLINE = "Care workspace";
+export const BRAND_TAGLINE = "Learn. Grow. Thrive";
 
 /**
  * Sidebar structure — grouped by how the practice works (workspace → care

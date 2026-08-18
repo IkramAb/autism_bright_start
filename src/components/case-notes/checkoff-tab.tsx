@@ -83,8 +83,8 @@ export function CheckoffTab({ data }: { data: CaseNotesData }) {
             <div>
               <div className="action-card-title">Upload case notes report</div>
               <div className="action-card-sub">
-                Export from Catalyst (Student, Service Date, Session Time, User) — we&apos;ll match
-                it against this week&apos;s schedule and auto-check what lines up.
+                Export from Catalyst as CSV (Student, Service Date, Session Time, User) —
+                we&apos;ll match it against this week&apos;s schedule and auto-check what lines up.
               </div>
             </div>
           </div>
@@ -92,7 +92,7 @@ export function CheckoffTab({ data }: { data: CaseNotesData }) {
             <input
               ref={fileRef}
               type="file"
-              accept=".csv,.xlsx,.xls"
+              accept=".csv,text/csv"
               style={{ display: "none" }}
               onChange={handleUpload}
             />

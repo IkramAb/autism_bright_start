@@ -14,10 +14,19 @@ function Overlay({ children, onClose }: { children: React.ReactNode; onClose: ()
   );
 }
 
-export function AddEmployeeModal({ onClose }: { onClose: () => void }) {
+export type NewStaffStatus = "active" | "onboarding";
+
+export function AddEmployeeModal({
+  onClose,
+  defaultStatus = "active",
+}: {
+  onClose: () => void;
+  defaultStatus?: NewStaffStatus;
+}) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [status, setStatus] = useState<NewStaffStatus>(defaultStatus);
 
   function submit(formData: FormData) {
     setError(null);
@@ -39,8 +48,9 @@ export function AddEmployeeModal({ onClose }: { onClose: () => void }) {
         <h2 style={{ fontSize: 16, fontWeight: 600, color: "var(--color-ink)" }}>Add employee</h2>
       </div>
       <p style={{ fontSize: 12, color: "var(--color-ink3)", marginBottom: 16 }}>
-        Creates a staff record with the full onboarding checklist, trainings, and HR document
-        placeholders. A Drive folder will be created when Google Drive is connected.
+        {status === "onboarding"
+          ? "Creates a staff record with the full onboarding checklist, trainings, background-check steps, and HR document placeholders. A Drive folder will be created when Google Drive is connected."
+          : "Creates the staff record only — no onboarding checklist, trainings, or HR documents. You can set those up later from the employee's profile."}
       </p>
       <form action={submit}>
         <div style={{ marginBottom: 12 }}>
@@ -66,11 +76,11 @@ export function AddEmployeeModal({ onClose }: { onClose: () => void }) {
             </select>
           </div>
         </div>
+        <div style={{ marginBottom: 12 }}>
+          <label className="modal-label">Email (optional)</label>
+          <input className="modal-input" type="email" name="email" placeholder="name@autismbrightstart.org" />
+        </div>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 18 }}>
-          <div>
-            <label className="modal-label">Email (optional)</label>
-            <input className="modal-input" type="email" name="email" placeholder="name@autismbrightstart.org" />
-          </div>
           <div>
             <label className="modal-label">Hire date</label>
             <input
@@ -79,6 +89,18 @@ export function AddEmployeeModal({ onClose }: { onClose: () => void }) {
               name="hired_on"
               defaultValue={new Date().toISOString().slice(0, 10)}
             />
+          </div>
+          <div>
+            <label className="modal-label">Status</label>
+            <select
+              className="modal-select"
+              name="status"
+              value={status}
+              onChange={(e) => setStatus(e.target.value as NewStaffStatus)}
+            >
+              <option value="active">Active — existing staff</option>
+              <option value="onboarding">Onboarding — new hire</option>
+            </select>
           </div>
         </div>
         {error && (

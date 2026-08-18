@@ -104,6 +104,9 @@ export function checklistProgress(items: { done: boolean }[]): number {
 export function trainingSummary(
   trainings: { status: TrainingStatus }[],
 ): { label: string; className: string } {
+  // Without this, zero trainings reads as a green "All complete" — a reassuring
+  // wrong answer for staff added without an onboarding checklist.
+  if (!trainings.length) return { label: "No trainings tracked", className: "pill-gray" };
   const pending = trainings.filter((t) => t.status === "pending" || t.status === "in_progress").length;
   const overdue = trainings.filter((t) => t.status === "overdue").length;
   if (overdue) return { label: "BG check overdue", className: "pill-coral" };
